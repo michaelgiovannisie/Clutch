@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${venue.name} + ' — FIFA World Cup 2026™'">Venue — FIFA World Cup 2026™</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange: #FF6B35;
+      --pink:   #E8407A;
+      --gold:   #FFB830;
+      --dark:   #2D1200;
+      --white:  #FFFFFF;
+      --radius: 14px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #FF6B35 0%, #FF9A5C 30%, #E8407A 70%, #C0306A 100%);
+      min-height: 100vh;
+      color: var(--dark);
+    }
+
+    /* ── Header ─────────────────────────────────────────────────── */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 28px;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(12px);
+      border-bottom: 1.5px solid rgba(255,255,255,0.35);
+      position: sticky; top: 0; z-index: 999;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .back-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 16px; border-radius: 20px;
+      border: 1.5px solid rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.18); color: var(--white);
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      text-decoration: none; transition: background 0.2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.32); }
+    .header-title { font-size: 14px; font-weight: 800; color: var(--white);
+      letter-spacing: 1px; text-transform: uppercase;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+    .trophy { font-size: 26px; }
+
+    /* ── Page layout ─────────────────────────────────────────────── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 32px 24px 60px; }
+
+    /* ── Hero carousel ───────────────────────────────────────────── */
+    .hero {
+      width: 100%; height: 420px; border-radius: 20px; overflow: hidden;
+      position: relative; background: rgba(255,255,255,0.15);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.2); margin-bottom: 28px;
+    }
+    .hero-img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: opacity 0.4s ease;
+    }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .hero-info {
+      position: absolute; bottom: 24px; left: 28px; color: var(--white);
+    }
+    .hero-country { font-size: 12px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; opacity: 0.85; margin-bottom: 4px; }
+    .hero-name { font-size: 32px; font-weight: 900; line-height: 1.1;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+    .hero-city { font-size: 15px; opacity: 0.8; margin-top: 4px; }
+    .hero-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(0,0,0,0.4); border: none; color: #fff;
+      width: 44px; height: 44px; border-radius: 50%; font-size: 22px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s; z-index: 10;
+    }
+    .hero-btn:hover { background: rgba(0,0,0,0.65); }
+    .hero-btn.prev { left: 14px; }
+    .hero-btn.next { right: 14px; }
+    .hero-dots {
+      position: absolute; bottom: 16px; right: 20px;
+      display: flex; gap: 6px;
+    }
+    .hero-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,0.4); cursor: pointer; transition: background 0.2s;
+    }
+    .hero-dot.active { background: #fff; }
+    .photo-count {
+      position: absolute; top: 16px; right: 16px;
+      background: rgba(0,0,0,0.45); color: #fff;
+      font-size: 12px; font-weight: 700; padding: 4px 10px;
+      border-radius: 20px; letter-spacing: 0.5px;
+    }
+
+    /* ── Content grid ────────────────────────────────────────────── */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* ── Card base ───────────────────────────────────────────────── */
+    .card {
+      background: rgba(255,255,255,0.93);
+      border-radius: var(--radius); padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 11px; font-weight: 800; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--orange); margin-bottom: 16px;
+    }
+
+    /* ── Stats grid ──────────────────────────────────────────────── */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stat-box {
+      background: rgba(255,107,53,0.06);
+      border: 1px solid rgba(255,107,53,0.15);
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--orange); margin-bottom: 4px; }
+    .stat-value { font-size: 20px; font-weight: 800; color: var(--dark); }
+    .stat-sub { font-size: 11px; color: #888; margin-top: 2px; }
+
+    /* ── Mini map ────────────────────────────────────────────────── */
+    #mini-map {
+      width: 100%; height: 260px; border-radius: 10px; overflow: hidden;
+      border: 1px solid rgba(255,107,53,0.15);
+    }
+
+    /* ── Match placeholder ───────────────────────────────────────── */
+    .match-placeholder {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 10px; padding: 32px 20px;
+      text-align: center;
+    }
+    .match-placeholder .icon { font-size: 40px; opacity: 0.35; }
+    .match-placeholder h3 { font-size: 15px; font-weight: 700; color: var(--dark); }
+    .match-placeholder p { font-size: 13px; color: #888; max-width: 260px; line-height: 1.5; }
+    .match-badge {
+      display: inline-block; background: rgba(255,107,53,0.1);
+      color: var(--orange); border: 1px solid rgba(255,107,53,0.3);
+      border-radius: 20px; padding: 4px 14px; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.5px; margin-top: 4px;
+    }
+
+    /* ── Coordinates pill ────────────────────────────────────────── */
+    .coords {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,107,53,0.08); border: 1px solid rgba(255,107,53,0.2);
+      border-radius: 20px; padding: 5px 12px; font-size: 12px;
+      color: var(--dark); font-family: monospace; margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <span class="trophy">🏆</span>
+    <span class="header-title">FIFA World Cup 2026™</span>
+  </div>
+  <a class="back-btn" th:href="@{/venues}">← Venue Explorer</a>
+</header>
+
+<div class="page">
+
+  <!-- Hero Carousel -->
+  <div class="hero" id="hero">
+    <img class="hero-img" id="heroImg" src="" alt="Stadium photo"/>
+    <div class="hero-overlay"></div>
+    <div class="hero-info">
+      <div class="hero-country" th:text="${venue.flag + ' ' + venue.country}"></div>
+      <div class="hero-name"  th:text="${venue.name}"></div>
+      <div class="hero-city"  th:text="${venue.city}"></div>
+    </div>
+    <button class="hero-btn prev" id="heroPrev" onclick="heroPrev()">‹</button>
+    <button class="hero-btn next" id="heroNext" onclick="heroNext()">›</button>
+    <div class="hero-dots" id="heroDots"></div>
+    <div class="photo-count" id="photoCount"></div>
+  </div>
+
+  <div class="content-grid">
+
+    <!-- Left column -->
+    <div>
+
+      <!-- Stats -->
+      <div class="card">
+        <div class="card-title">Stadium Info</div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">Capacity</div>
+            <div class="stat-value" th:text="${#numbers.formatInteger(venue.capacity, 1, 'COMMA')}"></div>
+            <div class="stat-sub">seats</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">City</div>
+            <div class="stat-value" style="font-size:16px" th:text="${venue.city}"></div>
+            <div class="stat-sub" th:text="${venue.country}"></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Host Nation</div>
+            <div class="stat-value" style="font-size:28px" th:text="${venue.flag}"></div>
+            <div class="stat-sub" th:text="${venue.country}"></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Tournament</div>
+            <div class="stat-value" style="font-size:16px">2026</div>
+            <div class="stat-sub">FIFA World Cup™</div>
+          </div>
+        </div>
+        <div class="coords">
+          📍 <span th:text="${venue.lat + ', ' + venue.lng}"></span>
+        </div>
+      </div>
+
+      <!-- Match Schedule -->
+      <div class="card">
+        <div class="card-title">Match Schedule</div>
+        <div class="match-placeholder">
+          <div class="icon">⚽</div>
+          <h3>Match schedule coming soon</h3>
+          <p>Fixtures for this stadium will appear here once the match data is available.</p>
+          <span class="match-badge">Coming Soon</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right column -->
+    <div>
+
+      <!-- Mini Map -->
+      <div class="card">
+        <div class="card-title">Location</div>
+        <div id="mini-map"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Hidden venue data for JS -->
+<div id="venueData"
+     th:data-id="${venue.id}"
+     th:data-lat="${venue.lat}"
+     th:data-lng="${venue.lng}"
+     th:data-name="${venue.name}"
+     style="display:none"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  /* ── Mini map ──────────────────────────────────────────────────── */
+  const vd   = document.getElementById('venueData');
+  const vLat = parseFloat(vd.dataset.lat);
+  const vLng = parseFloat(vd.dataset.lng);
+  const vId  = vd.dataset.id;
+
+  const miniMap = L.map('mini-map', { zoomControl: true, scrollWheelZoom: false })
+    .setView([vLat, vLng], 13);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 19
+  }).addTo(miniMap);
+
+  const pinIcon = L.divIcon({
+    className: '',
+    html: `<div style="
+      width:36px;height:36px;border-radius:50%;
+      background:linear-gradient(135deg,#FF6B35,#E8407A);
+      border:3px solid #fff;
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;box-shadow:0 3px 12px rgba(232,64,122,0.5)">🏟️</div>`,
+    iconAnchor: [18, 18],
+  });
+
+  L.marker([vLat, vLng], { icon: pinIcon })
+    .addTo(miniMap)
+    .bindPopup(`<strong>${vd.dataset.name}</strong>`)
+    .openPopup();
+
+  /* ── Hero carousel ─────────────────────────────────────────────── */
+  let heroImages = [];
+  let heroIdx = 0;
+
+  async function loadHeroImages() {
+    try {
+      heroImages = await fetch(`/api/venues/${vId}/images`).then(r => r.json());
+    } catch(e) { heroImages = []; }
+
+    const img    = document.getElementById('heroImg');
+    const prev   = document.getElementById('heroPrev');
+    const next   = document.getElementById('heroNext');
+    const dots   = document.getElementById('heroDots');
+    const count  = document.getElementById('photoCount');
+
+    if (heroImages.length === 0) {
+      img.style.background = 'linear-gradient(135deg,#FF6B35,#E8407A)';
+      prev.style.display = next.style.display = 'none';
+      return;
+    }
+
+    prev.style.display = heroImages.length > 1 ? 'flex' : 'none';
+    next.style.display = heroImages.length > 1 ? 'flex' : 'none';
+
+    dots.innerHTML = heroImages.map((_, i) =>
+      `<div class="hero-dot ${i === 0 ? 'active' : ''}" onclick="heroGoto(${i})"></div>`
+    ).join('');
+
+    renderHero();
+  }
+
+  function renderHero() {
+    const img = document.getElementById('heroImg');
+    img.style.opacity = '0';
+    img.src = heroImages[heroIdx];
+    img.onload = () => { img.style.opacity = '1'; };
+
+    document.getElementById('photoCount').textContent =
+      `${heroIdx + 1} / ${heroImages.length}`;
+
+    document.querySelectorAll('.hero-dot').forEach((d, i) =>
+      d.classList.toggle('active', i === heroIdx));
+  }
+
+  function heroPrev() {
+    heroIdx = (heroIdx - 1 + heroImages.length) % heroImages.length;
+    renderHero();
+  }
+  function heroNext() {
+    heroIdx = (heroIdx + 1) % heroImages.length;
+    renderHero();
+  }
+  function heroGoto(i) { heroIdx = i; renderHero(); }
+
+  loadHeroImages();
+</script>
+</body>
+</html>

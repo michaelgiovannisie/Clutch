@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FIFA World Cup 2026 — Venue Explorer</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #020F2A;
+      --gold:   #C9A84C;
+      --gold2:  #E8C96A;
+      --red:    #D32F2F;
+      --white:  #FFFFFF;
+      --panel:  rgba(2, 15, 42, 0.95);
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ─── Header ────────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: var(--navy);
+      border-bottom: 2px solid var(--gold);
+      z-index: 1000;
+      flex-shrink: 0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .trophy {
+      font-size: 28px;
+    }
+
+    .header-title h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .header-title p {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── Filter Pills ──────────────────────────────────────────── */
+    .filters {
+      display: flex;
+      gap: 8px;
+    }
+
+    .filter-btn {
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1.5px solid rgba(201,168,76,0.4);
+      background: transparent;
+      color: rgba(255,255,255,0.7);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+      background: var(--gold);
+      color: var(--navy);
+      border-color: var(--gold);
+    }
+
+    /* ─── Audio Player ──────────────────────────────────────────── */
+    .audio-player {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(201,168,76,0.1);
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 24px;
+      padding: 6px 14px;
+    }
+
+    .audio-meta {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .audio-meta .song-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gold);
+      white-space: nowrap;
+    }
+
+    .audio-meta .song-artist {
+      font-size: 10px;
+      color: rgba(255,255,255,0.45);
+    }
+
+    .audio-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .audio-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+
+    .audio-btn:hover { background: rgba(255,255,255,0.1); }
+
+    .play-btn {
+      background: var(--gold) !important;
+      color: var(--navy) !important;
+      width: 32px;
+      height: 32px;
+      font-size: 13px;
+    }
+
+    .play-btn:hover { background: var(--gold2) !important; }
+
+    .volume-slider {
+      -webkit-appearance: none;
+      width: 64px;
+      height: 3px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--gold);
+      cursor: pointer;
+    }
+
+    .audio-note {
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      font-style: italic;
+    }
+
+    /* ─── Progress bar ──────────────────────────────────────────── */
+    .progress-wrap {
+      width: 80px;
+      height: 3px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 2px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--gold);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.5s linear;
+      pointer-events: none;
+    }
+
+    /* ─── Main Layout ────────────────────────────────────────────── */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ─── Sidebar ────────────────────────────────────────────────── */
+    .sidebar {
+      width: 300px;
+      flex-shrink: 0;
+      background: var(--panel);
+      border-right: 1px solid rgba(201,168,76,0.2);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 16px 18px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      position: sticky;
+      top: 0;
+      background: var(--panel);
+      z-index: 10;
+    }
+
+    .sidebar-header h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    .sidebar-count {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 2px;
+    }
+
+    .venue-list {
+      list-style: none;
+      padding: 8px 0;
+    }
+
+    .venue-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 18px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-left: 3px solid transparent;
+    }
+
+    .venue-item:hover,
+    .venue-item.active {
+      background: rgba(201,168,76,0.08);
+      border-left-color: var(--gold);
+    }
+
+    .venue-flag {
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .venue-info-brief {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .venue-info-brief .vname {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .venue-info-brief .vcity {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      margin-top: 1px;
+    }
+
+    .venue-cap {
+      font-size: 10px;
+      color: var(--gold);
+      font-weight: 600;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .venue-cap span {
+      display: block;
+      color: rgba(255,255,255,0.35);
+      font-weight: 400;
+    }
+
+    /* ─── Map ────────────────────────────────────────────────────── */
+    #map {
+      flex: 1;
+      z-index: 1;
+    }
+
+    /* ─── Popup card ─────────────────────────────────────────────── */
+    .leaflet-popup-content-wrapper {
+      background: var(--navy);
+      border: 1px solid var(--gold);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      padding: 0;
+      overflow: hidden;
+      min-width: 240px;
+    }
+
+    .leaflet-popup-tip-container { display: none; }
+    .leaflet-popup-content { margin: 0; width: auto !important; }
+
+    .popup-img {
+      width: 100%;
+      height: 130px;
+      object-fit: cover;
+      display: block;
+      background: linear-gradient(135deg, #0a1f44 0%, #1a3a6b 100%);
+    }
+
+    .popup-body {
+      padding: 14px 16px;
+    }
+
+    .popup-country {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--gold);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .popup-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.3;
+      margin-bottom: 10px;
+    }
+
+    .popup-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .popup-stat {
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+
+    .popup-stat .label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 3px;
+    }
+
+    .popup-stat .value {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .popup-matches {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 10px;
+    }
+
+    .popup-matches-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 6px;
+    }
+
+    .popup-match-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      padding: 3px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .popup-match-item:last-child { border-bottom: none; }
+
+    .match-teams { color: var(--white); font-weight: 500; }
+
+    .match-date {
+      color: var(--gold);
+      font-size: 10px;
+      white-space: nowrap;
+      margin-left: 8px;
+    }
+
+    .match-stage {
+      font-size: 9px;
+      color: rgba(255,255,255,0.35);
+      margin-left: 4px;
+    }
+
+    /* ─── Custom markers ─────────────────────────────────────────── */
+    .custom-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 2.5px solid var(--gold);
+      background: var(--navy);
+      color: var(--white);
+      font-size: 16px;
+      box-shadow: 0 2px 12px rgba(201,168,76,0.5);
+      transition: transform 0.2s;
+      cursor: pointer;
+    }
+
+    .custom-marker:hover { transform: scale(1.15); }
+
+    .custom-marker.active-marker {
+      background: var(--gold);
+      color: var(--navy);
+      transform: scale(1.2);
+    }
+
+    /* Cap-based size classes */
+    .marker-lg { width: 40px; height: 40px; }
+    .marker-md { width: 34px; height: 34px; font-size: 14px; }
+    .marker-sm { width: 28px; height: 28px; font-size: 12px; }
+
+    /* Country dot on marker */
+    .marker-country-dot {
+      position: absolute;
+      bottom: -1px;
+      right: -1px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid var(--navy);
+    }
+
+    /* ─── Next match badge ───────────────────────────────────────── */
+    .next-badge {
+      display: inline-block;
+      background: var(--red);
+      color: var(--white);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 4px;
+    }
+
+    /* ─── Scrollbar ──────────────────────────────────────────────── */
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }
+
+    /* ─── Leaflet overrides ──────────────────────────────────────── */
+    .leaflet-control-zoom a {
+      background: var(--navy) !important;
+      color: var(--gold) !important;
+      border-color: rgba(201,168,76,0.4) !important;
+    }
+
+    .leaflet-control-zoom a:hover {
+      background: rgba(201,168,76,0.15) !important;
+    }
+
+    .leaflet-popup-close-button {
+      color: var(--gold) !important;
+      font-size: 18px !important;
+      top: 6px !important;
+      right: 8px !important;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Header ─────────────────────────────────────────────────── -->
+<header>
+  <div class="header-left">
+    <span class="trophy">🏆</span>
+    <div class="header-title">
+      <h1>FIFA World Cup 2026™</h1>
+      <p>Venue Explorer · 16 Host Stadiums</p>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterVenues('all', this)">All</button>
+    <button class="filter-btn" onclick="filterVenues('USA', this)">🇺🇸 USA</button>
+    <button class="filter-btn" onclick="filterVenues('Canada', this)">🇨🇦 Canada</button>
+    <button class="filter-btn" onclick="filterVenues('Mexico', this)">🇲🇽 Mexico</button>
+  </div>
+
+  <!-- Audio Player -->
+  <div class="audio-player">
+    <div class="audio-meta">
+      <span class="song-title">FIFA World Cup 2026™ Anthem</span>
+      <span class="song-artist">Official Soundtrack</span>
+    </div>
+    <div class="audio-controls">
+      <button class="audio-btn play-btn" id="playBtn" title="Play / Pause" onclick="togglePlay()">▶</button>
+      <div class="progress-wrap" id="progressWrap" onclick="seekAudio(event)" title="Click to seek">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <button class="audio-btn" id="muteBtn" title="Mute / Unmute" onclick="toggleMute()">🔊</button>
+      <input type="range" class="volume-slider" id="volSlider" min="0" max="1" step="0.05"
+             value="0.6" oninput="setVolume(this.value)" title="Volume"/>
+    </div>
+    <span class="audio-note">Add anthem MP3 to /static/audio/anthem.mp3</span>
+  </div>
+</header>
+
+<!-- ─── Body ──────────────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Host Stadiums</h2>
+      <div class="sidebar-count" id="sidebarCount">16 venues</div>
+    </div>
+    <ul class="venue-list" id="venueList"></ul>
+  </aside>
+
+  <!-- Map -->
+  <div id="map"></div>
+</div>
+
+<!-- Hidden audio element — swap src for real MP3 -->
+<audio id="anthem" loop preload="none">
+  <source src="/static/audio/anthem.mp3" type="audio/mpeg"/>
+  <!-- fallback: <source src="https://yourcdn.com/anthem.mp3" type="audio/mpeg"/> -->
+</audio>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+/* ─── Venue Data ──────────────────────────────────────────────── */
+const venues = [
+  // USA
+  {
+    id: 1, country: "USA", flag: "🇺🇸", countryColor: "#B22234",
+    name: "MetLife Stadium", city: "New York / New Jersey", capacity: 82500,
+    lat: 40.8136, lng: -74.0744,
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/MetLife_Stadium_in_East_Rutherford%2C_NJ.jpg/640px-MetLife_Stadium_in_East_Rutherford%2C_NJ.jpg",
+    matches: [
+      { teams: "Opening Ceremony Match", date: "Jun 11", stage: "Group" },
+      { teams: "Quarter-final", date: "Jul 4", stage: "QF" },
+      { teams: "FINAL", date: "Jul 19", stage: "🏆 Final" },
+    ]
+  },
+  {
+    id: 2, country: "USA", flag: "🇺🇸", countryColor: "#B22234",
+    name: "SoFi Stadium", city: "Los Angeles", capacity: 70240,
+    lat: 33.9535, lng: -118.3392,
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/SoFi_Stadium_-_Inglewood%2C_CA.jpg/640px-SoFi_Stadium_-_Inglewood%2C_CA.jpg",
+    matches: [
+      { teams: "Group Stage", date: "Jun 14", stage: "Group" },
+      { teams: "Round of 16", date: "Jul 1", stage: "R16" },
+      { teams: "Semi-final", date: "Jul 15", stage: "SF" },
+    ]
+  },
+  {
+    id: 3, country: "USA", flag: "🇺🇸", countryColor: "#B22234",
+    name: "AT&T Stadium", city: "Dallas", capacity: 80000,
+    lat: 32.7473, lng: -97.0945,
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/AT%26T_Stadium_-_Arlington%2C_Texas.jpg/640px-AT%26T_Stadium_-_Arlington%2C_Texas.jpg",
+    matches: [
+      { teams: "Group Stage", date: "Jun 16", stage: "Group" },
+      { teams: "Group Stage", date: "Jun 22", stage: "Group" },
+      { teams: "Quarter-final", date: "Jul 5", stage: "QF" },
+    ]
+  },
+  {
+    id: 4, country: "USA", flag: "🇺🇸", countryColor: "#B22234",
+    name: "Levi's Stadium", city: "San Francisco Bay Area", capacity: 68500,
+    lat: 37.4032, lng: -121.9698,
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Levi%27s_Stadium_aerial_view_2016.jpg/640px-Levi%27s_Stadium_aerial_view_2016.jpg",
+    matches: [
+      { teams: "Group Stage", date: "Jun 18", stage: "Group" },
+      { teams: "Round of 16", date: "Jul 2", stage: "R16" },
+    ]
+  },
+  {
+    id: 5, country: "USA", flag: "🇺🇸", countryColor: "#B22234",
+    name: "Hard Rock Stadium", city: "Miami", capacity: 65326,
+    lat: 25.9580, lng: -80.2389,
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Hard_Rock_Stadium.jpg/640px-Hard_Rock_Stadium.jpg",
+    matches: [
+      { teams: "Group Stage", date: "Jun 17", stage: "Group" },
+      { teams: "Group Stage", date: "Jun 25", stage: "Group" },
+      { teams: "Round of 16", date: "Jul 3", stage: "R16" },
+    ]
+  },
+  {
+    id: 6, country: "USA", flag: "🇺🇸", countryColor: "#B22234",
+    name: "Gillette Stadium", city: "Boston", capacity: 65878,
+    lat: 42.0909, lng: -71.2643,
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Gillette_Stadium.jpg/640px-Gillette_Stadium.jpg",
+    matches: [
+      { teams: "Group Stage", date: "Jun 15", stage: "Group" },
+      { teams: "Group Stage", date: "Jun 20", stage: "Group" },
+    ]
+  },
+  {
+    id: 7, country: "USA", flag: "🇺🇸", countryColor: "#B22234",
+    name: "Lincoln Financial Field", city: "Philadelphia", capacity: 69796,
+    lat: 39.9008, lng: -75.1675,
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Lincoln_Financial_Field_2014.jpg/640px-Lincoln_Financial_Field_2014.jpg",
+    matches: [
+      { teams: "Group Stage", date: "Jun 19", stage: "Group" },
+      { teams: "Round of 16", date: "Jun 29", stage: "R16" },
+    ]
+  },
+  {
+    id: 8, country: "USA", flag: "🇺🇸", countryColor: "#B22234",
+    name: "Arrowhead Stadium", city: "Kansas City", capacity: 76416,
+    lat: 39.0489, lng: -94.4839,
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Arrowhead_Stadium.jpg/640px-Arrowhead_Stadium.jpg",
+    matches: [
+      { teams: "Group Stage", date: "Jun 21", stage: "Group" },
+      { teams: "Group Stage", date: "Jun 27", stage: "Group" },
+    ]
+  },
+  {
+    id: 9, country: "USA", flag: "🇺🇸", countryColor: "#B22234",
+    name: "Seattle Lumen Field", city: "Seattle", capacity: 68740,
+    lat: 47.5952, lng: -122.3316,
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Lumen_Field.jpg/640px-Lumen_Field.jpg",
+    matches: [
+      { teams: "Group Stage", date: "Jun 23", stage: "Group" },
+      { teams: "Round of 16", date: "Jun 30", stage: "R16" },
+    ]
+  },
+  // Canada
+  {
+    id: 10, country: "Canada", flag: "🇨🇦", countryColor: "#FF0000",
+    name: "BC Place", city: "Vancouver", capacity: 54500,
+    lat: 49.2768, lng: -123.1115,
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/BC_Place_-_2011.jpg/640px-BC_Place_-_2011.jpg",
+    matches: [
+      { teams: "Group Stage", date: "Jun 12", stage: "Group" },
+      { teams: "Group Stage", date: "Jun 24", stage: "Group" },
+      { teams: "Semi-final", date: "Jul 14", stage: "SF" },
+    ]
+  },
+  {
+    id: 11, country: "Canada", flag: "🇨🇦", countryColor: "#FF0000",
+    name: "BMO Field", city: "Toronto", capacity: 45736,
+    lat: 43.6333, lng: -79.4187,
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/BMO_Field_2016.jpg/640px-BMO_Field_2016.jpg",
+    matches: [
+      { teams: "Group Stage", date: "Jun 13", stage: "Group" },
+      { teams: "Group Stage", date: "Jun 26", stage: "Group" },
+    ]
+  },
+  // Mexico
+  {
+    id: 12, country: "Mexico", flag: "🇲🇽", countryColor: "#006847",
+    name: "Estadio Azteca", city: "Mexico City", capacity: 87523,
+    lat: 19.3029, lng: -99.1505,
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Estadio_Azteca_-_Vista_Aerea.jpg/640px-Estadio_Azteca_-_Vista_Aerea.jpg",
+    matches: [
+      { teams: "Opening Match", date: "Jun 11", stage: "Group" },
+      { teams: "Group Stage", date: "Jun 17", stage: "Group" },
+      { teams: "Round of 16", date: "Jun 28", stage: "R16" },
+    ]
+  },
+  {
+    id: 13, country: "Mexico", flag: "🇲🇽", countryColor: "#006847",
+    name: "Estadio AKRON", city: "Guadalajara", capacity: 45456,
+    lat: 20.6867, lng: -103.4670,
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Estadio_Chivas_Guadalajara.jpg/640px-Estadio_Chivas_Guadalajara.jpg",
+    matches: [
+      { teams: "Group Stage", date: "Jun 14", stage: "Group" },
+      { teams: "Group Stage", date: "Jun 20", stage: "Group" },
+    ]
+  },
+  {
+    id: 14, country: "Mexico", flag: "🇲🇽", countryColor: "#006847",
+    name: "Estadio BBVA", city: "Monterrey", capacity: 53500,
+    lat: 25.6693, lng: -100.2440,
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Estadio_BBVA_Bancomer_aerial.jpg/640px-Estadio_BBVA_Bancomer_aerial.jpg",
+    matches: [
+      { teams: "Group Stage", date: "Jun 16", stage: "Group" },
+      { teams: "Round of 16", date: "Jun 27", stage: "R16" },
+    ]
+  },
+];
+
+/* ─── Map Init ────────────────────────────────────────────────── */
+const map = L.map('map', {
+  center: [37.5, -96],
+  zoom: 4,
+  zoomControl: true,
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+/* ─── Markers ────────────────────────────────────────────────── */
+let markers = {};
+let activeVenueId = null;
+
+function markerSizeClass(cap) {
+  if (cap >= 75000) return 'marker-lg';
+  if (cap >= 60000) return 'marker-md';
+  return 'marker-sm';
+}
+
+function buildPopupHTML(v) {
+  const matchRows = v.matches.map(m => `
+    <div class="popup-match-item">
+      <span class="match-teams">${m.teams}</span>
+      <span>
+        <span class="match-stage">${m.stage}</span>
+        <span class="match-date">${m.date}</span>
+      </span>
+    </div>`).join('');
+
+  const isFinal = v.matches.some(m => m.stage.includes('Final'));
+  const badge = isFinal ? '<span class="next-badge">🏆 Final</span>' : '';
+
+  return `
+    <img class="popup-img" src="${v.image}" alt="${v.name}" onerror="this.style.background='linear-gradient(135deg,#0a1f44,#1a3a6b)'"/>
+    <div class="popup-body">
+      <div class="popup-country">${v.flag} ${v.country} ${badge}</div>
+      <div class="popup-name">${v.name}</div>
+      <div class="popup-stats">
+        <div class="popup-stat">
+          <div class="label">City</div>
+          <div class="value" style="font-size:11px">${v.city}</div>
+        </div>
+        <div class="popup-stat">
+          <div class="label">Capacity</div>
+          <div class="value">${v.capacity.toLocaleString()}</div>
+        </div>
+      </div>
+      <div class="popup-matches">
+        <div class="popup-matches-title">Scheduled Matches (${v.matches.length})</div>
+        ${matchRows}
+      </div>
+    </div>`;
+}
+
+venues.forEach(v => {
+  const sizeClass = markerSizeClass(v.capacity);
+  const icon = L.divIcon({
+    className: '',
+    html: `<div class="custom-marker ${sizeClass}" style="position:relative">
+             ${v.flag}
+             <div class="marker-country-dot" style="background:${v.countryColor}"></div>
+           </div>`,
+    iconSize: null,
+    iconAnchor: [17, 17],
+    popupAnchor: [0, -20],
+  });
+
+  const marker = L.marker([v.lat, v.lng], { icon })
+    .addTo(map)
+    .bindPopup(buildPopupHTML(v), { maxWidth: 280, minWidth: 260 });
+
+  marker.on('click', () => setActiveVenue(v.id));
+  markers[v.id] = { marker, venue: v };
+});
+
+/* ─── Sidebar List ───────────────────────────────────────────── */
+function buildSidebar(filtered) {
+  const ul = document.getElementById('venueList');
+  ul.innerHTML = '';
+  document.getElementById('sidebarCount').textContent = `${filtered.length} venue${filtered.length !== 1 ? 's' : ''}`;
+
+  filtered.forEach(v => {
+    const li = document.createElement('li');
+    li.className = `venue-item${v.id === activeVenueId ? ' active' : ''}`;
+    li.dataset.id = v.id;
+    li.innerHTML = `
+      <span class="venue-flag">${v.flag}</span>
+      <div class="venue-info-brief">
+        <div class="vname">${v.name}</div>
+        <div class="vcity">${v.city}</div>
+      </div>
+      <div class="venue-cap">
+        ${v.capacity.toLocaleString()}
+        <span>seats</span>
+      </div>`;
+
+    li.addEventListener('click', () => setActiveVenue(v.id, true));
+    li.addEventListener('mouseenter', () => {
+      if (v.id !== activeVenueId) {
+        markers[v.id].marker.openPopup();
+      }
+    });
+    li.addEventListener('mouseleave', () => {
+      if (v.id !== activeVenueId) {
+        markers[v.id].marker.closePopup();
+      }
+    });
+
+    ul.appendChild(li);
+  });
+}
+
+/* ─── Active Venue ───────────────────────────────────────────── */
+function setActiveVenue(id, flyTo = false) {
+  activeVenueId = id;
+  const { marker, venue } = markers[id];
+
+  // update sidebar highlight
+  document.querySelectorAll('.venue-item').forEach(el => {
+    el.classList.toggle('active', +el.dataset.id === id);
+  });
+
+  if (flyTo) {
+    map.flyTo([venue.lat, venue.lng], 10, { duration: 1 });
+    setTimeout(() => marker.openPopup(), 900);
+  } else {
+    marker.openPopup();
+  }
+}
+
+/* ─── Filter ─────────────────────────────────────────────────── */
+let currentFilter = 'all';
+
+function filterVenues(country, btn) {
+  currentFilter = country;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const filtered = country === 'all' ? venues : venues.filter(v => v.country === country);
+
+  // show/hide markers
+  venues.forEach(v => {
+    const m = markers[v.id].marker;
+    const visible = country === 'all' || v.country === country;
+    if (visible) { if (!map.hasLayer(m)) map.addLayer(m); }
+    else { if (map.hasLayer(m)) map.removeLayer(m); }
+  });
+
+  buildSidebar(filtered);
+
+  // fit bounds
+  if (filtered.length > 0) {
+    const bounds = L.latLngBounds(filtered.map(v => [v.lat, v.lng]));
+    map.fitBounds(bounds, { padding: [40, 40] });
+  }
+}
+
+// Initial render
+buildSidebar(venues);
+
+/* ─── Audio ──────────────────────────────────────────────────── */
+const anthem  = document.getElementById('anthem');
+const playBtn = document.getElementById('playBtn');
+const muteBtn = document.getElementById('muteBtn');
+const volSlider = document.getElementById('volSlider');
+const progressFill = document.getElementById('progressFill');
+const progressWrap = document.getElementById('progressWrap');
+
+anthem.volume = 0.6;
+let isMuted = false;
+let lastVol = 0.6;
+
+function togglePlay() {
+  if (anthem.paused) {
+    anthem.play().then(() => {
+      playBtn.textContent = '⏸';
+    }).catch(() => {
+      // No file yet — show visual feedback only
+      playBtn.textContent = '⏸';
+      setTimeout(() => playBtn.textContent = '▶', 800);
+    });
+  } else {
+    anthem.pause();
+    playBtn.textContent = '▶';
+  }
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  anthem.muted = isMuted;
+  muteBtn.textContent = isMuted ? '🔇' : '🔊';
+  volSlider.value = isMuted ? 0 : lastVol;
+}
+
+function setVolume(val) {
+  anthem.volume = val;
+  lastVol = val;
+  if (val == 0) {
+    isMuted = true;
+    anthem.muted = true;
+    muteBtn.textContent = '🔇';
+  } else {
+    isMuted = false;
+    anthem.muted = false;
+    muteBtn.textContent = '🔊';
+  }
+}
+
+function seekAudio(e) {
+  if (!anthem.duration) return;
+  const rect = progressWrap.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  anthem.currentTime = pct * anthem.duration;
+}
+
+anthem.addEventListener('timeupdate', () => {
+  if (!anthem.duration) return;
+  progressFill.style.width = (anthem.currentTime / anthem.duration * 100) + '%';
+});
+
+anthem.addEventListener('ended', () => { playBtn.textContent = '▶'; });
+</script>
+</body>
+</html>
