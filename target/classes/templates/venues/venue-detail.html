@@ -161,6 +161,83 @@
       border-radius: 20px; padding: 5px 12px; font-size: 12px;
       color: var(--dark); font-family: monospace; margin-top: 12px;
     }
+
+    /* ── Audio player ────────────────────────────────────────────── */
+    .audio-player {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.18);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 24px; padding: 6px 14px; backdrop-filter: blur(8px);
+    }
+    .audio-meta { display: flex; flex-direction: column; line-height: 1.2; }
+    .audio-meta .song-title  { font-size: 11px; font-weight: 800; color: var(--white); white-space: nowrap; }
+    .audio-meta .song-artist { font-size: 10px; color: rgba(255,255,255,0.65); }
+    .audio-controls { display: flex; align-items: center; gap: 6px; }
+    .audio-btn {
+      background: none; border: none; cursor: pointer; color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 50%; transition: all 0.2s; font-size: 14px;
+    }
+    .audio-btn:hover { background: rgba(255,255,255,0.2); }
+    .play-btn {
+      background: var(--white) !important; color: var(--orange) !important;
+      width: 32px; height: 32px; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .play-btn:hover { background: rgba(255,255,255,0.9) !important; }
+    .volume-slider {
+      -webkit-appearance: none; width: 64px; height: 3px;
+      background: rgba(255,255,255,0.3); border-radius: 2px; outline: none; cursor: pointer;
+    }
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 12px; height: 12px;
+      border-radius: 50%; background: var(--white); cursor: pointer;
+    }
+    .progress-wrap {
+      width: 80px; height: 3px; background: rgba(255,255,255,0.3);
+      border-radius: 2px; cursor: pointer; position: relative;
+    }
+    .progress-fill {
+      height: 100%; background: var(--white); border-radius: 2px;
+      width: 0%; transition: width 0.5s linear; pointer-events: none;
+    }
+
+    /* ── Share button ────────────────────────────────────────────── */
+    .share-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 12px; margin-left: 8px;
+      padding: 5px 14px; border-radius: 20px; cursor: pointer;
+      background: rgba(255,107,53,0.08); border: 1px solid rgba(255,107,53,0.25);
+      color: var(--orange); font-size: 12px; font-weight: 700;
+      transition: background 0.2s;
+    }
+    .share-btn:hover { background: rgba(255,107,53,0.2); }
+
+    /* ── Toast ───────────────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--dark); color: #fff; padding: 10px 22px; border-radius: 24px;
+      font-size: 13px; font-weight: 700; opacity: 0;
+      transition: opacity 0.3s, transform 0.3s; pointer-events: none; z-index: 9999;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Skeleton loader ─────────────────────────────────────────── */
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position:  400px 0; }
+    }
+    .skeleton-row {
+      height: 52px; border-radius: 10px; margin-bottom: 10px;
+      background: linear-gradient(90deg, rgba(255,107,53,0.06) 25%, rgba(255,107,53,0.13) 50%, rgba(255,107,53,0.06) 75%);
+      background-size: 800px 100%;
+      animation: shimmer 1.4s infinite linear;
+    }
+    .skeleton-label {
+      height: 10px; width: 45%; border-radius: 6px; margin-bottom: 14px;
+      background: linear-gradient(90deg, rgba(255,107,53,0.06) 25%, rgba(255,107,53,0.13) 50%, rgba(255,107,53,0.06) 75%);
+      background-size: 800px 100%;
+      animation: shimmer 1.4s infinite linear;
+    }
   </style>
 </head>
 <body>
@@ -170,7 +247,24 @@
     <span class="trophy">🏆</span>
     <span class="header-title">FIFA World Cup 2026™</span>
   </div>
-  <a class="back-btn" th:href="@{/venues}">← Venue Explorer</a>
+  <a class="back-btn" id="backBtn" th:href="@{/venues}">← Venue Explorer</a>
+
+  <div class="audio-player" id="audioPlayer" style="display:none">
+    <span id="nowPlayingFlag" style="font-size:20px">🌍</span>
+    <div class="audio-meta">
+      <span class="song-title"  id="songTitle">Loading…</span>
+      <span class="song-artist" id="songArtist"></span>
+    </div>
+    <div class="audio-controls">
+      <button class="audio-btn play-btn" id="playBtn" onclick="togglePlay()">▶</button>
+      <div class="progress-wrap" id="progressWrap" onclick="seekAudio(event)">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <button class="audio-btn" id="muteBtn" onclick="toggleMute()">🔊</button>
+      <input type="range" class="volume-slider" id="volSlider"
+             min="0" max="1" step="0.05" value="0.6" oninput="setVolume(this.value)"/>
+    </div>
+  </div>
 </header>
 
 <div class="page">
@@ -220,19 +314,23 @@
             <div class="stat-sub">FIFA World Cup™</div>
           </div>
         </div>
-        <div class="coords">
-          📍 <span th:text="${venue.lat + ', ' + venue.lng}"></span>
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0">
+          <div class="coords">📍 <span th:text="${venue.lat + ', ' + venue.lng}"></span></div>
+          <button class="share-btn" onclick="shareVenue()">🔗 Share</button>
         </div>
       </div>
 
       <!-- Match Schedule -->
       <div class="card">
         <div class="card-title">Match Schedule</div>
-        <div class="match-placeholder">
-          <div class="icon">⚽</div>
-          <h3>Match schedule coming soon</h3>
-          <p>Fixtures for this stadium will appear here once the match data is available.</p>
-          <span class="match-badge">Coming Soon</span>
+        <div style="padding:4px 0 8px">
+          <div class="skeleton-label"></div>
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row" style="opacity:0.7"></div>
+          <div class="skeleton-row" style="opacity:0.45"></div>
+          <p style="font-size:11px;color:#aaa;text-align:center;margin-top:12px;font-style:italic">
+            Match fixtures loading soon…
+          </p>
         </div>
       </div>
 
@@ -259,6 +357,7 @@
      th:data-name="${venue.name}"
      style="display:none"></div>
 
+<div id="toast">🔗 Link copied!</div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   /* ── Mini map ──────────────────────────────────────────────────── */
@@ -344,7 +443,84 @@
   }
   function heroGoto(i) { heroIdx = i; renderHero(); }
 
+  /* ── Audio player ──────────────────────────────────────────────── */
+  const TRACKS = {
+    '/audio/anthem.mp3':     { title: 'FIFA World Cup 2026™ Anthem', artist: 'Official Soundtrack', flag: '🌍' },
+    '/audio/dna.mp3':        { title: 'DNA',                          artist: '🇺🇸 United States',   flag: '🇺🇸' },
+    '/audio/goals.mp3':      { title: 'GOALS',                        artist: '🇨🇦 Canada',           flag: '🇨🇦' },
+    '/audio/illuminate.mp3': { title: 'Illuminate',                   artist: '🇲🇽 México',           flag: '🇲🇽' },
+  };
+
+  let bgAudio = null;
+  let isMuted = false, lastVol = 0.6;
+
+  const savedTrack = sessionStorage.getItem('currentTrack');
+  if (savedTrack && sessionStorage.getItem('splashDone')) {
+    bgAudio = new Audio(savedTrack);
+    bgAudio.loop = true;
+    bgAudio.volume = 0.6;
+    bgAudio.play().catch(() => {});
+
+    const meta = TRACKS[savedTrack] || { title: savedTrack, artist: '', flag: '🎵' };
+    document.getElementById('songTitle').textContent   = meta.title;
+    document.getElementById('songArtist').textContent  = meta.artist;
+    document.getElementById('nowPlayingFlag').textContent = meta.flag;
+    document.getElementById('audioPlayer').style.display = 'flex';
+
+    bgAudio.addEventListener('play',  () => { document.getElementById('playBtn').textContent = '⏸'; });
+    bgAudio.addEventListener('pause', () => { document.getElementById('playBtn').textContent = '▶'; });
+    bgAudio.addEventListener('timeupdate', () => {
+      if (bgAudio.duration)
+        document.getElementById('progressFill').style.width =
+          (bgAudio.currentTime / bgAudio.duration * 100) + '%';
+    });
+  }
+
+  function togglePlay() {
+    if (!bgAudio) return;
+    bgAudio.paused ? bgAudio.play().catch(() => {}) : bgAudio.pause();
+  }
+  function toggleMute() {
+    if (!bgAudio) return;
+    isMuted = !isMuted; bgAudio.muted = isMuted;
+    document.getElementById('muteBtn').textContent  = isMuted ? '🔇' : '🔊';
+    document.getElementById('volSlider').value = isMuted ? 0 : lastVol;
+  }
+  function setVolume(val) {
+    if (!bgAudio) return;
+    bgAudio.volume = val; lastVol = val;
+    isMuted = val == 0; bgAudio.muted = isMuted;
+    document.getElementById('muteBtn').textContent = isMuted ? '🔇' : '🔊';
+  }
+  function seekAudio(e) {
+    if (!bgAudio || !bgAudio.duration) return;
+    const rect = document.getElementById('progressWrap').getBoundingClientRect();
+    bgAudio.currentTime = ((e.clientX - rect.left) / rect.width) * bgAudio.duration;
+  }
+
+  /* ── Back button — return to country map ──────────────────────── */
+  const fromCountry = new URLSearchParams(window.location.search).get('from');
+  const backBtn = document.getElementById('backBtn');
+  if (fromCountry && backBtn) {
+    backBtn.href = `/venues?enter=${fromCountry}`;
+    backBtn.textContent = `← Back to ${fromCountry}`;
+  }
+
   loadHeroImages();
+
+  /* ── Share button ──────────────────────────────────────────────── */
+  function shareVenue() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => showToast('🔗 Link copied!'))
+      .catch(() => { prompt('Copy this link:', url); });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
 </script>
 </body>
 </html>
