@@ -545,88 +545,143 @@
   loadHeroImages();
 
   /* ── Nearby Attractions ───────────────────────────────────────── */
-  const ATTRACTION_ICONS = {
-    museum: '🏛️', attraction: '⭐', viewpoint: '👁️', gallery: '🖼️',
-    zoo: '🦁', theme_park: '🎢', aquarium: '🐟', artwork: '🎨',
-    monument: '🗿', memorial: '🕊️', castle: '🏰', ruins: '🏚️',
-    park: '🌳', nature_reserve: '🌿', default: '📍'
+  const VENUE_ATTRACTIONS = {
+    1: [ // MetLife — New York / New Jersey
+      { name: 'Statue of Liberty',        type: 'Monument',   icon: '🗽', dist: '20 km' },
+      { name: 'Times Square',             type: 'Landmark',   icon: '🌆', dist: '19 km' },
+      { name: 'Central Park',             type: 'Park',       icon: '🌳', dist: '20 km' },
+      { name: 'Empire State Building',    type: 'Landmark',   icon: '🏙️', dist: '19 km' },
+      { name: 'Brooklyn Bridge',          type: 'Landmark',   icon: '🌉', dist: '23 km' },
+    ],
+    2: [ // SoFi — Los Angeles
+      { name: 'Venice Beach',             type: 'Beach',      icon: '🏖️', dist: '11 km' },
+      { name: 'Santa Monica Pier',        type: 'Attraction', icon: '🎡', dist: '12 km' },
+      { name: 'Getty Center',             type: 'Museum',     icon: '🏛️', dist: '15 km' },
+      { name: 'Hollywood Sign',           type: 'Landmark',   icon: '🎬', dist: '22 km' },
+      { name: 'Griffith Observatory',     type: 'Viewpoint',  icon: '🔭', dist: '23 km' },
+    ],
+    3: [ // AT&T — Dallas
+      { name: 'Sixth Floor Museum',       type: 'Museum',     icon: '🏛️', dist: '30 km' },
+      { name: 'Reunion Tower',            type: 'Viewpoint',  icon: '👁️', dist: '30 km' },
+      { name: 'Fort Worth Stockyards',    type: 'Attraction', icon: '🤠', dist: '20 km' },
+      { name: 'Dallas Museum of Art',     type: 'Museum',     icon: '🖼️', dist: '30 km' },
+      { name: 'Dallas Arboretum',         type: 'Park',       icon: '🌸', dist: '35 km' },
+    ],
+    4: [ // Levi's — San Francisco Bay Area
+      { name: 'Golden Gate Bridge',       type: 'Landmark',   icon: '🌉', dist: '50 km' },
+      { name: 'Alcatraz Island',          type: 'Historic',   icon: '🏚️', dist: '48 km' },
+      { name: 'Fisherman\'s Wharf',       type: 'Attraction', icon: '🦀', dist: '48 km' },
+      { name: 'Winchester Mystery House', type: 'Attraction', icon: '👻', dist: '5 km'  },
+      { name: 'San Jose Museum of Art',   type: 'Museum',     icon: '🏛️', dist: '8 km'  },
+    ],
+    5: [ // Hard Rock — Miami
+      { name: 'South Beach',              type: 'Beach',      icon: '🏖️', dist: '22 km' },
+      { name: 'Wynwood Walls',            type: 'Art',        icon: '🎨', dist: '20 km' },
+      { name: 'Vizcaya Museum',           type: 'Museum',     icon: '🏛️', dist: '22 km' },
+      { name: 'Art Deco Historic District', type: 'Historic', icon: '🏘️', dist: '23 km' },
+      { name: 'Everglades National Park', type: 'Nature',     icon: '🌿', dist: '55 km' },
+    ],
+    6: [ // Gillette — Boston
+      { name: 'Freedom Trail',            type: 'Historic',   icon: '🗺️', dist: '45 km' },
+      { name: 'Fenway Park',              type: 'Landmark',   icon: '⚾', dist: '46 km' },
+      { name: 'Harvard University',       type: 'Landmark',   icon: '🎓', dist: '42 km' },
+      { name: 'Boston Common',            type: 'Park',       icon: '🌳', dist: '45 km' },
+      { name: 'Faneuil Hall Marketplace', type: 'Attraction', icon: '🏛️', dist: '45 km' },
+    ],
+    7: [ // Lincoln Financial — Philadelphia
+      { name: 'Liberty Bell',             type: 'Landmark',   icon: '🔔', dist: '8 km'  },
+      { name: 'Independence Hall',        type: 'Historic',   icon: '🏛️', dist: '8 km'  },
+      { name: 'Philadelphia Museum of Art', type: 'Museum',   icon: '🖼️', dist: '6 km'  },
+      { name: 'Eastern State Penitentiary', type: 'Historic', icon: '🏚️', dist: '8 km'  },
+      { name: 'Reading Terminal Market',  type: 'Attraction', icon: '🥨', dist: '7 km'  },
+    ],
+    8: [ // Arrowhead — Kansas City
+      { name: 'National WWI Museum',      type: 'Museum',     icon: '🏛️', dist: '10 km' },
+      { name: 'Country Club Plaza',       type: 'Attraction', icon: '🛍️', dist: '12 km' },
+      { name: 'Nelson-Atkins Museum',     type: 'Museum',     icon: '🖼️', dist: '12 km' },
+      { name: 'Kansas City Zoo',          type: 'Zoo',        icon: '🦁', dist: '15 km' },
+      { name: 'Crown Center',             type: 'Attraction', icon: '👑', dist: '10 km' },
+    ],
+    9: [ // Lumen — Seattle
+      { name: 'Space Needle',             type: 'Landmark',   icon: '🚀', dist: '2 km'  },
+      { name: 'Pike Place Market',        type: 'Attraction', icon: '🐟', dist: '2 km'  },
+      { name: 'Chihuly Garden & Glass',   type: 'Museum',     icon: '🪟', dist: '2 km'  },
+      { name: 'Museum of Pop Culture',    type: 'Museum',     icon: '🎸', dist: '2 km'  },
+      { name: 'Seattle Art Museum',       type: 'Museum',     icon: '🏛️', dist: '3 km'  },
+    ],
+    10: [ // BC Place — Vancouver
+      { name: 'Stanley Park',             type: 'Park',       icon: '🌲', dist: '3 km'  },
+      { name: 'Granville Island',         type: 'Attraction', icon: '🎭', dist: '3 km'  },
+      { name: 'Capilano Suspension Bridge', type: 'Attraction', icon: '🌉', dist: '12 km' },
+      { name: 'Vancouver Aquarium',       type: 'Aquarium',   icon: '🐟', dist: '4 km'  },
+      { name: 'Gastown',                  type: 'Historic',   icon: '🏘️', dist: '2 km'  },
+    ],
+    11: [ // BMO Field — Toronto
+      { name: 'CN Tower',                 type: 'Landmark',   icon: '🗼', dist: '3 km'  },
+      { name: 'Ripley\'s Aquarium',       type: 'Aquarium',   icon: '🦈', dist: '3 km'  },
+      { name: 'Royal Ontario Museum',     type: 'Museum',     icon: '🏛️', dist: '5 km'  },
+      { name: 'Distillery District',      type: 'Historic',   icon: '🏘️', dist: '4 km'  },
+      { name: 'Casa Loma',               type: 'Castle',     icon: '🏰', dist: '6 km'  },
+    ],
+    12: [ // Azteca — Mexico City
+      { name: 'Teotihuacan',              type: 'Historic',   icon: '🏛️', dist: '45 km' },
+      { name: 'Chapultepec Castle',       type: 'Castle',     icon: '🏰', dist: '12 km' },
+      { name: 'National Museum of Anthropology', type: 'Museum', icon: '🗿', dist: '13 km' },
+      { name: 'Frida Kahlo Museum',       type: 'Museum',     icon: '🖼️', dist: '13 km' },
+      { name: 'Zócalo',                   type: 'Landmark',   icon: '⛪', dist: '15 km' },
+    ],
+    13: [ // Akron — Guadalajara
+      { name: 'Hospicio Cabañas',         type: 'Historic',   icon: '🏛️', dist: '15 km' },
+      { name: 'Tlaquepaque',              type: 'Attraction', icon: '🎨', dist: '10 km' },
+      { name: 'Guadalajara Cathedral',    type: 'Historic',   icon: '⛪', dist: '15 km' },
+      { name: 'Lago de Chapala',          type: 'Nature',     icon: '🏞️', dist: '45 km' },
+      { name: 'Barranca de Huentitán',    type: 'Nature',     icon: '🌿', dist: '18 km' },
+    ],
+    14: [ // BBVA — Monterrey
+      { name: 'Cerro de la Silla',        type: 'Nature',     icon: '⛰️', dist: '10 km' },
+      { name: 'Macroplaza',               type: 'Landmark',   icon: '🏙️', dist: '15 km' },
+      { name: 'Parque Fundidora',         type: 'Park',       icon: '🌳', dist: '13 km' },
+      { name: 'Barrio Antiguo',           type: 'Historic',   icon: '🏘️', dist: '15 km' },
+      { name: 'Grutas de García',         type: 'Nature',     icon: '🦇', dist: '40 km' },
+    ],
   };
-
-  function attractionIcon(tags) {
-    const t = tags.tourism || tags.historic || tags.leisure || 'default';
-    return ATTRACTION_ICONS[t] || ATTRACTION_ICONS.default;
-  }
-
-  function attractionType(tags) {
-    return (tags.tourism || tags.historic || tags.leisure || 'place')
-      .replace(/_/g, ' ');
-  }
-
-  function haversineM(lat1, lng1, lat2, lng2) {
-    const R = 6371000, dLat = (lat2-lat1)*Math.PI/180, dLng = (lng2-lng1)*Math.PI/180;
-    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-    return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-  }
 
   async function loadAttractions() {
     const container = document.getElementById('attractionsContainer');
-    try {
-      const query = `[out:json][timeout:15];(
-        node["tourism"~"attraction|museum|viewpoint|gallery|zoo|theme_park|aquarium|artwork"](around:5000,${vLat},${vLng});
-        node["historic"~"monument|memorial|castle|ruins"](around:5000,${vLat},${vLng});
-        node["leisure"="park"](around:4000,${vLat},${vLng});
-      );out 20;`;
+    const attractions = VENUE_ATTRACTIONS[+vId];
 
-      const res = await fetch(
-        `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`
-      ).then(r => r.json());
-
-      // Filter to named places, sort by distance, take top 5
-      const places = (res.elements || [])
-        .filter(e => e.tags?.name)
-        .map(e => ({ ...e, distM: haversineM(vLat, vLng, e.lat, e.lon) }))
-        .sort((a, b) => a.distM - b.distM)
-        .slice(0, 5);
-
-      // Fetch landmark images
-      let landmarkImgs = [];
-      try {
-        landmarkImgs = await fetch(`/api/venues/${vId}/landmark-images`).then(r => r.json());
-      } catch(e) {}
-
-      if (places.length === 0) {
-        container.innerHTML = `<div class="attractions-loading">No attractions found nearby.</div>`;
-        return;
-      }
-
-      const grid = document.createElement('div');
-      grid.className = 'attractions-grid';
-
-      places.forEach((p, i) => {
-        const img = landmarkImgs[i];
-        const distText = p.distM < 1000
-          ? `${p.distM} m from stadium`
-          : `${(p.distM/1000).toFixed(1)} km from stadium`;
-        const card = document.createElement('div');
-        card.className = 'attraction-card';
-        card.innerHTML = `
-          ${img
-            ? `<img class="attraction-img" src="${img}" alt="${p.tags.name}" loading="lazy"/>`
-            : `<div class="attraction-img-placeholder">${attractionIcon(p.tags)}</div>`}
-          <div class="attraction-body">
-            <div class="attraction-type">${attractionIcon(p.tags)} ${attractionType(p.tags)}</div>
-            <div class="attraction-name">${p.tags.name}</div>
-            <div class="attraction-dist">📍 ${distText}</div>
-          </div>`;
-        grid.appendChild(card);
-      });
-
-      container.innerHTML = '';
-      container.appendChild(grid);
-
-    } catch(e) {
-      container.innerHTML = `<div class="attractions-loading">Could not load attractions.</div>`;
+    if (!attractions) {
+      container.innerHTML = `<div class="attractions-loading">No attractions listed for this venue yet.</div>`;
+      return;
     }
+
+    // Fetch seeded landmark images
+    let landmarkImgs = [];
+    try {
+      landmarkImgs = await fetch(`/api/venues/${vId}/landmark-images`).then(r => r.json());
+    } catch(e) {}
+
+    const grid = document.createElement('div');
+    grid.className = 'attractions-grid';
+
+    attractions.forEach((a, i) => {
+      const img = landmarkImgs[i];
+      const card = document.createElement('div');
+      card.className = 'attraction-card';
+      card.innerHTML = `
+        ${img
+          ? `<img class="attraction-img" src="${img}" alt="${a.name}" loading="lazy"/>`
+          : `<div class="attraction-img-placeholder">${a.icon}</div>`}
+        <div class="attraction-body">
+          <div class="attraction-type">${a.icon} ${a.type}</div>
+          <div class="attraction-name">${a.name}</div>
+          <div class="attraction-dist">📍 ${a.dist} from stadium</div>
+        </div>`;
+      grid.appendChild(card);
+    });
+
+    container.innerHTML = '';
+    container.appendChild(grid);
   }
 
   loadAttractions();
