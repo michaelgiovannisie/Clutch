@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FIFA World Cup 2026™ — Standings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange: #FF6B35;
+      --peach:  #FFAA70;
+      --pink:   #E8407A;
+      --gold:   #FFB830;
+      --dark:   #2D1200;
+      --white:  #FFFFFF;
+      --panel:  rgba(255,255,255,0.93);
+      --radius: 14px;
+      --advance: #2bd576;
+      --wildcard: #ffd34e;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #FF6B35 0%, #FF9A5C 30%, #E8407A 70%, #C0306A 100%);
+      color: var(--dark);
+      min-height: 100vh;
+    }
+
+    /* ─── Header ─────────────────────────────────────────────────── */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 24px;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(12px);
+      border-bottom: 1.5px solid rgba(255,255,255,0.35);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .header-logo {
+      width: 36px; height: 36px; object-fit: contain;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+    }
+    .header-title h1 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 15px; font-weight: 700; color: var(--white);
+      letter-spacing: 1.5px; text-transform: uppercase;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    }
+    .header-title p { font-size: 11px; color: rgba(255,255,255,0.75); }
+
+    nav { display: flex; gap: 6px; }
+    .nav-link {
+      padding: 6px 14px; border-radius: 20px;
+      border: 1.5px solid rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.12); color: var(--white);
+      font-size: 12px; font-weight: 700; text-decoration: none;
+      letter-spacing: 0.5px; backdrop-filter: blur(6px);
+      transition: background 0.2s;
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.28); }
+    .nav-link.active { background: var(--white); color: var(--orange); border-color: var(--white); }
+
+    /* ─── Page Container ─────────────────────────────────────────── */
+    .page { max-width: 1080px; margin: 0 auto; padding: 24px 16px 48px; }
+
+    .page-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 28px; font-weight: 700; color: var(--white);
+      letter-spacing: 1px; text-transform: uppercase;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
+    }
+
+    /* ─── Tab Pills ──────────────────────────────────────────────── */
+    .tab-bar {
+      display: flex; gap: 8px; margin-bottom: 24px;
+    }
+    .tab-btn {
+      padding: 8px 22px; border-radius: 24px;
+      border: 2px solid rgba(255,255,255,0.55);
+      background: rgba(255,255,255,0.15); color: var(--white);
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      letter-spacing: 0.5px; backdrop-filter: blur(6px);
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { background: rgba(255,255,255,0.28); }
+    .tab-btn.active { background: var(--white); color: var(--orange); border-color: var(--white); }
+
+    /* ─── Tab Panels ─────────────────────────────────────────────── */
+    .tab-panel { display: none; }
+    .tab-panel.visible { display: block; }
+
+    /* ─── Group Grid ─────────────────────────────────────────────── */
+    .groups-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .group-card {
+      background: var(--panel); border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+    }
+
+    .group-header {
+      padding: 10px 14px;
+      background: linear-gradient(135deg, var(--orange), var(--pink));
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .group-header h2 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 16px; font-weight: 700; color: var(--white);
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .group-header .col-labels {
+      display: flex; gap: 12px;
+      font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.8);
+      letter-spacing: 0.5px;
+    }
+
+    .standings-table {
+      width: 100%; border-collapse: collapse;
+    }
+    .standings-table tbody tr {
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      height: 40px;
+    }
+    .standings-table tbody tr:last-child { border-bottom: none; }
+    .standings-table tbody tr:hover { background: rgba(255,107,53,0.04); }
+
+    .state-bar {
+      width: 4px; height: 40px; flex-shrink: 0;
+    }
+
+    td.td-state { width: 4px; padding: 0; }
+    td.td-rank {
+      width: 28px; padding: 0 4px 0 8px;
+      font-size: 11px; font-weight: 700; color: rgba(45,18,0,0.4);
+      text-align: center;
+    }
+    td.td-flag { width: 28px; padding: 0 4px; }
+    td.td-flag img { width: 22px; height: 16px; object-fit: cover; border-radius: 2px; display: block; }
+    td.td-name {
+      padding: 0 6px; font-size: 13px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 130px;
+    }
+    td.td-stat {
+      width: 32px; text-align: center;
+      font-size: 12px; font-weight: 600; color: rgba(45,18,0,0.75);
+    }
+    td.td-pts {
+      width: 36px; text-align: center;
+      font-size: 13px; font-weight: 800; color: var(--dark);
+    }
+
+    .state-advance  { background-color: var(--advance); }
+    .state-wildcard { background-color: var(--wildcard); }
+    .state-out      { background-color: transparent; }
+
+    /* ─── Third-Place Race ───────────────────────────────────────── */
+    .section-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 18px; font-weight: 700; color: var(--white);
+      letter-spacing: 1px; text-transform: uppercase;
+      margin: 24px 0 12px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    }
+
+    .thirds-card {
+      background: var(--panel); border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+      margin-bottom: 24px;
+    }
+    .thirds-header {
+      padding: 10px 16px;
+      background: linear-gradient(135deg, var(--gold), var(--orange));
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .thirds-header h2 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 15px; font-weight: 700; color: var(--dark);
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .thirds-header .col-labels {
+      font-size: 10px; font-weight: 700; color: rgba(45,18,0,0.65);
+      display: flex; gap: 12px;
+    }
+    .thirds-table { width: 100%; border-collapse: collapse; }
+    .thirds-table tbody tr { height: 40px; border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .thirds-table tbody tr:last-child { border-bottom: none; }
+
+    .cutoff-row td {
+      border-top: 2px dashed rgba(232,64,122,0.5) !important;
+    }
+    .thirds-rank {
+      width: 32px; text-align: center;
+      font-size: 11px; font-weight: 700; color: rgba(45,18,0,0.4);
+    }
+    .thirds-group {
+      width: 28px; text-align: center;
+      font-size: 11px; font-weight: 700;
+      color: rgba(45,18,0,0.55);
+    }
+
+    /* ─── Legend ─────────────────────────────────────────────────── */
+    .legend {
+      display: flex; gap: 16px; flex-wrap: wrap;
+      background: rgba(255,255,255,0.18);
+      border-radius: 10px; padding: 10px 14px;
+      margin-bottom: 24px; backdrop-filter: blur(6px);
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--white); font-weight: 600; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ─── Bracket Tab ────────────────────────────────────────────── */
+    .qualifier-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .qual-col {
+      background: var(--panel); border-radius: var(--radius);
+      overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+    }
+    .qual-col-header {
+      padding: 8px 14px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 12px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--white);
+    }
+    .qual-col-header.green  { background: linear-gradient(135deg, #16a34a, #15803d); }
+    .qual-col-header.gold   { background: linear-gradient(135deg, #ca8a04, #a16207); }
+    .qual-col-header.blue   { background: linear-gradient(135deg, #1d4ed8, #1e3a8a); }
+
+    .qual-list { list-style: none; padding: 6px 0; }
+    .qual-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 12px; font-size: 12px; font-weight: 600;
+    }
+    .qual-item img { width: 20px; height: 14px; object-fit: cover; border-radius: 2px; }
+    .qual-item .grp-tag {
+      font-size: 10px; font-weight: 700;
+      color: rgba(45,18,0,0.45); margin-left: auto;
+    }
+    .qual-item.t3-placeholder {
+      font-style: italic; color: rgba(45,18,0,0.55);
+    }
+
+    /* ─── R32 Matchup List ───────────────────────────────────────── */
+    .r32-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+    }
+    .matchup-card {
+      background: var(--panel); border-radius: var(--radius);
+      padding: 12px 14px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+    }
+    .matchup-num {
+      font-size: 10px; font-weight: 800; color: var(--orange);
+      letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;
+    }
+    .matchup-vs {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .matchup-team {
+      display: flex; align-items: center; gap: 6px; flex: 1;
+      font-size: 12px; font-weight: 700;
+      white-space: nowrap; overflow: hidden;
+    }
+    .matchup-team img { width: 20px; height: 14px; object-fit: cover; border-radius: 2px; flex-shrink: 0; }
+    .matchup-team .team-grp {
+      font-size: 10px; color: rgba(45,18,0,0.45); font-weight: 600; margin-left: 2px;
+    }
+    .matchup-team.placeholder { font-style: italic; color: rgba(45,18,0,0.5); font-size: 11px; }
+    .vs-divider {
+      font-size: 10px; font-weight: 800; color: rgba(45,18,0,0.35);
+      padding: 0 4px; flex-shrink: 0;
+    }
+    .provisional-note {
+      font-size: 10px; color: rgba(45,18,0,0.45); margin-top: 4px; font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Header ──────────────────────────────────────────────────────── -->
+<header>
+  <div class="header-left">
+    <img class="header-logo" src="/logos/app-icon.png" alt="World Cup Tracker logo"/>
+    <div class="header-title">
+      <h1>World Cup Tracker</h1>
+      <p>FIFA World Cup 2026™</p>
+    </div>
+  </div>
+  <nav>
+    <a class="nav-link" href="/venues">Venues</a>
+    <a class="nav-link active" href="/standings">Standings</a>
+  </nav>
+</header>
+
+<!-- ─── Page ─────────────────────────────────────────────────────────── -->
+<div class="page">
+  <h1 class="page-title">Standings &amp; Bracket</h1>
+
+  <!-- Tab Pills -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('group-stage', this)">Group Stage</button>
+    <button class="tab-btn" onclick="switchTab('bracket', this)">Round of 32</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- GROUP STAGE TAB                                                 -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div id="tab-group-stage" class="tab-panel visible">
+
+    <!-- 12 Group Tables -->
+    <div class="groups-grid">
+      <div class="group-card" th:each="group : ${groups}">
+        <div class="group-header">
+          <h2>Group <span th:text="${group.id}">A</span></h2>
+          <div class="col-labels">
+            <span>P</span><span>W</span><span>D</span><span>L</span>
+            <span>GD</span><span>PTS</span>
+          </div>
+        </div>
+        <table class="standings-table">
+          <tbody>
+            <tr th:each="row : ${group.rows}">
+              <td class="td-state">
+                <div class="state-bar"
+                     th:classappend="${row.state == 'advance'  ? 'state-advance'  :
+                                      row.state == 'wildcard' ? 'state-wildcard' : 'state-out'}">
+                </div>
+              </td>
+              <td class="td-rank" th:text="${row.rank}">1</td>
+              <td class="td-flag">
+                <img th:src="@{'/flags/' + ${row.slug} + '.jpg'}"
+                     th:alt="${row.name}"
+                     onerror="this.style.display='none'"/>
+              </td>
+              <td class="td-name" th:text="${row.name}">Country</td>
+              <td class="td-stat" th:text="${row.played}">0</td>
+              <td class="td-stat" th:text="${row.won}">0</td>
+              <td class="td-stat" th:text="${row.drawn}">0</td>
+              <td class="td-stat" th:text="${row.lost}">0</td>
+              <td class="td-stat" th:text="${row.gd > 0 ? '+' + row.gd : row.gd}">0</td>
+              <td class="td-pts" th:text="${row.points}">0</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--advance)"></div>
+        <span>Advance to R32</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--wildcard)"></div>
+        <span>Wild-card (3rd place — top 8 of 12)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:rgba(45,18,0,0.18)"></div>
+        <span>Qualification undecided</span>
+      </div>
+    </div>
+
+    <!-- Third-Place Race -->
+    <p class="section-title">Third-Place Wild-Card Race</p>
+    <div class="thirds-card">
+      <div class="thirds-header">
+        <h2>Best 3rd-Placed Teams — Top 8 of 12 Advance</h2>
+        <div class="col-labels">
+          <span>GRP</span><span>P</span><span>W</span><span>D</span>
+          <span>L</span><span>GD</span><span>PTS</span>
+        </div>
+      </div>
+      <table class="thirds-table">
+        <tbody>
+          <tr th:each="t, iter : ${thirdPlaceRace}"
+              th:classappend="${iter.index == 8 ? 'cutoff-row' : ''}">
+            <td class="td-state">
+              <div class="state-bar" th:classappend="${t.qualified ? 'state-wildcard' : 'state-out'}"></div>
+            </td>
+            <td class="thirds-rank" th:text="${t.thirdRank}">1</td>
+            <td class="thirds-group" th:text="${t.group}">A</td>
+            <td class="td-flag">
+              <img th:src="@{'/flags/' + ${t.slug} + '.jpg'}"
+                   th:alt="${t.name}"
+                   onerror="this.style.display='none'"/>
+            </td>
+            <td class="td-name" th:text="${t.name}">Country</td>
+            <td class="td-stat" th:text="${t.played}">0</td>
+            <td class="td-stat" th:text="${t.won}">0</td>
+            <td class="td-stat" th:text="${t.drawn}">0</td>
+            <td class="td-stat" th:text="${t.lost}">0</td>
+            <td class="td-stat" th:text="${t.gd > 0 ? '+' + t.gd : t.gd}">0</td>
+            <td class="td-pts" th:text="${t.points}">0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /tab-group-stage -->
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- BRACKET TAB                                                     -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div id="tab-bracket" class="tab-panel">
+
+    <!-- Qualifier Columns -->
+    <p class="section-title">Projected Qualifiers</p>
+    <div class="qualifier-cols">
+
+      <!-- Group Winners -->
+      <div class="qual-col">
+        <div class="qual-col-header green">Group Winners (12)</div>
+        <ul class="qual-list">
+          <li class="qual-item" th:each="w : ${projectedWinners}">
+            <img th:src="@{'/flags/' + ${w.slug} + '.jpg'}" th:alt="${w.name}"
+                 onerror="this.style.display='none'"/>
+            <span th:text="${w.name}">Country</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Group Runners-Up -->
+      <div class="qual-col">
+        <div class="qual-col-header blue">Runners-Up (12)</div>
+        <ul class="qual-list">
+          <li class="qual-item" th:each="r : ${projectedRunnersUp}">
+            <img th:src="@{'/flags/' + ${r.slug} + '.jpg'}" th:alt="${r.name}"
+                 onerror="this.style.display='none'"/>
+            <span th:text="${r.name}">Country</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Best Thirds -->
+      <div class="qual-col">
+        <div class="qual-col-header gold">Best 3rd-Placed (8)</div>
+        <ul class="qual-list">
+          <li class="qual-item" th:each="t : ${projectedBestThirds}">
+            <img th:src="@{'/flags/' + ${t.slug} + '.jpg'}" th:alt="${t.name}"
+                 onerror="this.style.display='none'"/>
+            <span th:text="${t.name}">Country</span>
+            <span class="grp-tag" th:text="'Grp ' + ${t.group}">Grp A</span>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- R32 Matchups -->
+    <p class="section-title">Projected Round of 32</p>
+    <div class="r32-grid">
+      <div class="matchup-card" th:each="m : ${projectedR32}">
+        <div class="matchup-num">Match <span th:text="${m.matchNumber}">73</span></div>
+        <div class="matchup-vs">
+
+          <!-- Home Side -->
+          <div class="matchup-team" th:classappend="${m.homeSlug == null ? 'placeholder' : ''}">
+            <img th:if="${m.homeSlug != null}"
+                 th:src="@{'/flags/' + ${m.homeSlug} + '.jpg'}"
+                 th:alt="${m.homeName}"
+                 onerror="this.style.display='none'"/>
+            <span th:if="${m.homeSlug != null}">
+              <span th:text="${m.homeName}">Country</span>
+              <span class="team-grp" th:if="${m.homeGroup != null}" th:text="'(' + ${m.homeGroup} + ')'"></span>
+            </span>
+            <span th:if="${m.homeSlug == null}" th:text="${m.homeLabel}">3rd of A/B/C</span>
+          </div>
+
+          <span class="vs-divider">vs</span>
+
+          <!-- Away Side -->
+          <div class="matchup-team" th:classappend="${m.awaySlug == null ? 'placeholder' : ''}">
+            <img th:if="${m.awaySlug != null}"
+                 th:src="@{'/flags/' + ${m.awaySlug} + '.jpg'}"
+                 th:alt="${m.awayName}"
+                 onerror="this.style.display='none'"/>
+            <span th:if="${m.awaySlug != null}">
+              <span th:text="${m.awayName}">Country</span>
+              <span class="team-grp" th:if="${m.awayGroup != null}" th:text="'(' + ${m.awayGroup} + ')'"></span>
+            </span>
+            <span th:if="${m.awaySlug == null}" th:text="${m.awayLabel}">3rd of A/B/C</span>
+          </div>
+
+        </div>
+        <div th:if="${m.homeSlug == null or m.awaySlug == null}" class="provisional-note">
+          Provisional — 3rd-place slot pending official FIFA allocation
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-bracket -->
+
+</div><!-- /page -->
+
+<script>
+  function switchTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('visible'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('visible');
+    btn.classList.add('active');
+  }
+</script>
+
+</body>
+</html>

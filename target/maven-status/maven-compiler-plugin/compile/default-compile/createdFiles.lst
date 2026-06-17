@@ -1,5 +1,15 @@
 com/zipcode/worldcuptracker/controller/VenueController.class
+com/zipcode/worldcuptracker/standings/StandingRowView.class
 com/zipcode/worldcuptracker/service/VenueService.class
+com/zipcode/worldcuptracker/standings/RawStandingRow.class
 com/zipcode/worldcuptracker/repository/VenueRepository.class
+com/zipcode/worldcuptracker/model/Venue$VenueBuilder.class
+com/zipcode/worldcuptracker/standings/GroupStandingView.class
+com/zipcode/worldcuptracker/controller/StandingsController.class
 com/zipcode/worldcuptracker/WorldCupTrackerApplication.class
+com/zipcode/worldcuptracker/service/StandingsService.class
+com/zipcode/worldcuptracker/standings/ProjectedMatchup.class
+com/zipcode/worldcuptracker/standings/MockStandingsData.class
+com/zipcode/worldcuptracker/standings/ThirdPlaceRow.class
 com/zipcode/worldcuptracker/model/Venue.class
+com/zipcode/worldcuptracker/service/BracketService.class

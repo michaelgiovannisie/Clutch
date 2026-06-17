@@ -1,0 +1,27 @@
+import StandingsRow from './StandingsRow.jsx';
+
+const headers = ['', '#', 'Team', 'P', 'W', 'D', 'L', 'GF', 'GA', 'GD', 'Pts'];
+
+export default function GroupTable({ group }) {
+  return (
+    <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-card)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+      <div style={{ padding: '10px 14px', background: 'var(--surface-2)', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+        Group {group.id}
+      </div>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            {headers.map((h, i) => (
+              <th key={i} style={{ padding: '4px 6px', fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textAlign: i <= 2 ? 'left' : 'center', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border)' }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {group.teams.map((row, i) => (
+            <StandingsRow key={row.slug} row={row} rank={row.rank ?? i + 1} state={row.state} />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
