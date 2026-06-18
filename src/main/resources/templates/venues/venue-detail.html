@@ -193,6 +193,19 @@
     .weather-wind { font-size: 11px; color: #999; margin-top: 6px; }
     .weather-error { font-size: 13px; color: #aaa; text-align: center; padding: 16px 0; }
 
+    /* ── Match schedule rows ─────────────────────────────────────── */
+    .match-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; padding: 10px 4px; border-bottom: 1px solid rgba(0,0,0,0.06);
+      font-size: 13px;
+    }
+    .match-row:last-child { border-bottom: none; }
+    .match-teams { font-weight: 700; color: var(--dark); }
+    .match-meta { font-size: 11px; color: #999; margin-top: 2px; }
+    .match-score { font-weight: 800; font-size: 14px; color: var(--orange); white-space: nowrap; }
+    .match-status { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: #999; }
+    .match-empty { font-size: 13px; color: #aaa; text-align: center; padding: 24px 0; }
+
     /* ── Match placeholder ───────────────────────────────────────── */
     .match-placeholder {
       display: flex; flex-direction: column; align-items: center;
@@ -329,6 +342,10 @@
   <div class="header-left">
     <span class="trophy">🏆</span>
     <span class="header-title">FIFA World Cup 2026™</span>
+    <nav style="display:flex;gap:10px;margin-left:6px">
+      <a href="/teams" style="color:#fff;font-size:12px;font-weight:700;text-decoration:none;opacity:0.9">Teams</a>
+      <a href="/matches" style="color:#fff;font-size:12px;font-weight:700;text-decoration:none;opacity:0.9">Matches</a>
+    </nav>
   </div>
   <a class="back-btn" id="backBtn" th:href="@{/venues}">← Venue Explorer</a>
 
@@ -407,14 +424,11 @@
       <!-- Match Schedule -->
       <div class="card">
         <div class="card-title">Match Schedule</div>
-        <div style="padding:4px 0 8px">
+        <div id="matchScheduleBody" style="padding:4px 0 8px">
           <div class="skeleton-label"></div>
           <div class="skeleton-row"></div>
           <div class="skeleton-row" style="opacity:0.7"></div>
           <div class="skeleton-row" style="opacity:0.45"></div>
-          <p style="font-size:11px;color:#aaa;text-align:center;margin-top:12px;font-style:italic">
-            Match fixtures loading soon…
-          </p>
         </div>
       </div>
 
@@ -749,6 +763,47 @@
     }
   }
   loadWeather();
+
+  /* ── Match Schedule ───────────────────────────────────────────── */
+  async function loadMatchSchedule() {
+    const body = document.getElementById('matchScheduleBody');
+    try {
+      const matches = await fetch(`/api/venues/${vId}/matches`).then(r => r.json());
+
+      if (!matches || matches.length === 0) {
+        body.innerHTML = `<div class="match-empty">No fixtures synced for this venue yet.</div>`;
+        return;
+      }
+
+      body.innerHTML = matches.map(m => {
+        const home = m.homeTeam ? m.homeTeam.name : 'TBD';
+        const away = m.awayTeam ? m.awayTeam.name : 'TBD';
+        const date = m.utcDate
+          ? new Date(m.utcDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+          : '';
+        const finished = m.status === 'FINISHED';
+        const score = finished && m.homeScore !== null && m.awayScore !== null
+          ? `${m.homeScore} – ${m.awayScore}`
+          : (date || '—');
+
+        return `
+          <div class="match-row">
+            <div>
+              <div class="match-teams">${home} vs ${away}</div>
+              <div class="match-meta">${m.stage ? m.stage.replaceAll('_',' ') : ''}${m.groupName ? ' · Group ' + m.groupName : ''}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="match-score">${score}</div>
+              <div class="match-status">${m.status || ''}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      body.innerHTML = `<div class="match-empty">Match fixtures unavailable right now.</div>`;
+    }
+  }
+  loadMatchSchedule();
 
   /* ── Nearby Attractions ───────────────────────────────────────── */
   const VENUE_ATTRACTIONS = {

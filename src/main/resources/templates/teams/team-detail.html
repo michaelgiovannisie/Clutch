@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${team.name} + ' — FIFA World Cup 2026™'">Team — FIFA World Cup 2026™</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --orange:#FF6B35; --pink:#E8407A; --dark:#2D1200; --white:#FFFFFF; --radius:14px; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #FF6B35 0%, #FF9A5C 30%, #E8407A 70%, #C0306A 100%);
+      min-height: 100vh; color: var(--dark);
+    }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 28px; background: rgba(255,255,255,0.15); backdrop-filter: blur(12px);
+      border-bottom: 1.5px solid rgba(255,255,255,0.35); position: sticky; top: 0; z-index: 999;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .back-btn {
+      display: flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 20px;
+      border: 1.5px solid rgba(255,255,255,0.6); background: rgba(255,255,255,0.18); color: var(--white);
+      font-size: 13px; font-weight: 700; text-decoration: none; transition: background 0.2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.32); }
+    .header-title { font-size: 14px; font-weight: 800; color: var(--white); letter-spacing: 1px; text-transform: uppercase; }
+    .page { max-width: 900px; margin: 0 auto; padding: 32px 40px 60px; }
+    .card { background: var(--white); border-radius: var(--radius); padding: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); margin-bottom: 20px; }
+    .team-header { display: flex; align-items: center; gap: 18px; }
+    .team-flag { font-size: 56px; }
+    .team-name { font-size: 26px; font-weight: 800; }
+    .team-meta { font-size: 13px; color: #888; margin-top: 4px; }
+    .card-title { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #999; margin-bottom: 12px; }
+    .match-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 13px; }
+    .match-row:last-child { border-bottom: none; }
+    .match-teams { font-weight: 700; }
+    .match-score { font-weight: 800; color: var(--orange); }
+    .empty { font-size: 13px; color: #aaa; text-align: center; padding: 16px 0; }
+  </style>
+</head>
+<body>
+<header>
+  <div class="header-left">
+    <a class="back-btn" href="/teams">← Teams</a>
+    <span class="header-title">FIFA World Cup 2026™</span>
+  </div>
+</header>
+<div class="page">
+  <div class="card team-header">
+    <div class="team-flag" th:text="${team.flag} ?: '🏳️'"></div>
+    <div>
+      <div class="team-name" th:text="${team.name}"></div>
+      <div class="team-meta" th:text="${(team.groupName != null ? 'Group ' + team.groupName : '') + (team.coach != null ? ' · Coach: ' + team.coach : '')}"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Matches</div>
+    <div id="teamMatches"><div class="empty">Loading…</div></div>
+  </div>
+</div>
+
+<div id="teamData" th:data-id="${team.id}" style="display:none"></div>
+<script>
+  const teamId = document.getElementById('teamData').dataset.id;
+
+  async function loadTeamMatches() {
+    const body = document.getElementById('teamMatches');
+    try {
+      const matches = await fetch(`/api/matches`).then(r => r.json());
+      const mine = matches.filter(m =>
+        (m.homeTeam && String(m.homeTeam.id) === teamId) ||
+        (m.awayTeam && String(m.awayTeam.id) === teamId)
+      );
+      if (mine.length === 0) {
+        body.innerHTML = '<div class="empty">No fixtures synced yet.</div>';
+        return;
+      }
+      body.innerHTML = mine.map(m => {
+        const home = m.homeTeam ? m.homeTeam.name : 'TBD';
+        const away = m.awayTeam ? m.awayTeam.name : 'TBD';
+        const finished = m.status === 'FINISHED';
+        const score = finished ? `${m.homeScore} – ${m.awayScore}` : (m.status || '');
+        return `<div class="match-row"><div class="match-teams">${home} vs ${away}</div><div class="match-score">${score}</div></div>`;
+      }).join('');
+    } catch (e) {
+      body.innerHTML = '<div class="empty">Fixtures unavailable right now.</div>';
+    }
+  }
+  loadTeamMatches();
+</script>
+</body>
+</html>
