@@ -43,6 +43,7 @@ public class TeamService {
                     existing.setName(incoming.getName());
                     existing.setTla(incoming.getTla());
                     existing.setCrestUrl(incoming.getCrestUrl());
+                    existing.setFlag(incoming.getFlag());
                     existing.setGroupName(incoming.getGroupName());
                     existing.setCoach(incoming.getCoach());
                     return teamRepository.save(existing);

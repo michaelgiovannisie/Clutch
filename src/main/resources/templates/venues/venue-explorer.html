@@ -359,6 +359,7 @@
     <nav style="display:flex;gap:10px;margin-left:18px">
       <a href="/teams" style="color:#fff;font-size:12px;font-weight:700;text-decoration:none;opacity:0.9">Teams</a>
       <a href="/matches" style="color:#fff;font-size:12px;font-weight:700;text-decoration:none;opacity:0.9">Matches</a>
+      <a href="/standings" style="color:#fff;font-size:12px;font-weight:700;text-decoration:none;opacity:0.9">Standings</a>
     </nav>
   </div>
 
@@ -431,7 +432,7 @@ const COUNTRIES = {
     geoUrl: 'https://raw.githubusercontent.com/johan/world.geo.json/master/countries/USA.geo.json',
     fillColor: '#00337C',
     flag: '🇺🇸', label: 'United States',
-    venues: 9,
+    venues: 11,
     center: [39.5, -98.35], zoom: 4,
     cardGradient: 'linear-gradient(135deg,#00337C,#001A4D)',
     track: '/audio/dna.mp3',
@@ -891,7 +892,7 @@ function tickerAnimate(el, target, duration = 900) {
 }
 window.addEventListener('load', () => {
   const el = document.getElementById('venueCountSpan');
-  if (el) tickerAnimate(el, 14);
+  if (el) tickerAnimate(el, 16);
 });
 
 /* ─── Search & Sort ──────────────────────────────────────────── */

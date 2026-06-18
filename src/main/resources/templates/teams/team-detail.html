@@ -28,15 +28,22 @@
     .page { max-width: 900px; margin: 0 auto; padding: 32px 40px 60px; }
     .card { background: var(--white); border-radius: var(--radius); padding: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); margin-bottom: 20px; }
     .team-header { display: flex; align-items: center; gap: 18px; }
-    .team-flag { font-size: 56px; }
+    .team-flag { font-size: 56px; width: 72px; height: 50px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
     .team-name { font-size: 26px; font-weight: 800; }
     .team-meta { font-size: 13px; color: #888; margin-top: 4px; }
     .card-title { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #999; margin-bottom: 12px; }
+    .match-row-link { display: block; text-decoration: none; color: inherit; transition: background 0.15s; }
+    .match-row-link:hover { background: rgba(255,107,53,0.06); }
     .match-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 13px; }
     .match-row:last-child { border-bottom: none; }
     .match-teams { font-weight: 700; }
     .match-score { font-weight: 800; color: var(--orange); }
     .empty { font-size: 13px; color: #aaa; text-align: center; padding: 16px 0; }
+    .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+    .player-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: #f7f5f3; }
+    .player-number { font-size: 16px; font-weight: 800; color: var(--orange); width: 28px; text-align: center; }
+    .player-name { font-size: 13px; font-weight: 700; }
+    .player-position { font-size: 11px; color: #999; }
   </style>
 </head>
 <body>
@@ -48,11 +55,17 @@
 </header>
 <div class="page">
   <div class="card team-header">
-    <div class="team-flag" th:text="${team.flag} ?: '🏳️'"></div>
+    <img class="team-flag" th:if="${team.flag}" th:src="${team.flag}" alt=""/>
+    <div class="team-flag" th:unless="${team.flag}" style="display:flex;align-items:center;justify-content:center;">🏳️</div>
     <div>
       <div class="team-name" th:text="${team.name}"></div>
       <div class="team-meta" th:text="${(team.groupName != null ? 'Group ' + team.groupName : '') + (team.coach != null ? ' · Coach: ' + team.coach : '')}"></div>
     </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Roster</div>
+    <div id="teamRoster"><div class="empty">Loading…</div></div>
   </div>
 
   <div class="card">
@@ -82,13 +95,35 @@
         const away = m.awayTeam ? m.awayTeam.name : 'TBD';
         const finished = m.status === 'FINISHED';
         const score = finished ? `${m.homeScore} – ${m.awayScore}` : (m.status || '');
-        return `<div class="match-row"><div class="match-teams">${home} vs ${away}</div><div class="match-score">${score}</div></div>`;
+        return `<a class="match-row-link" href="/matches/${m.id}"><div class="match-row"><div class="match-teams">${home} vs ${away}</div><div class="match-score">${score}</div></div></a>`;
       }).join('');
     } catch (e) {
       body.innerHTML = '<div class="empty">Fixtures unavailable right now.</div>';
     }
   }
   loadTeamMatches();
+
+  async function loadTeamRoster() {
+    const body = document.getElementById('teamRoster');
+    try {
+      const players = await fetch(`/api/teams/${teamId}/players`).then(r => r.json());
+      if (players.length === 0) {
+        body.innerHTML = '<div class="empty">No roster synced yet.</div>';
+        return;
+      }
+      body.innerHTML = `<div class="roster-grid">${players.map(p => `
+        <div class="player-card">
+          <div class="player-number">${p.shirtNumber ?? '–'}</div>
+          <div>
+            <div class="player-name">${p.name}</div>
+            <div class="player-position">${p.position ?? ''}${p.nationality ? ' · ' + p.nationality : ''}</div>
+          </div>
+        </div>`).join('')}</div>`;
+    } catch (e) {
+      body.innerHTML = '<div class="empty">Roster unavailable right now.</div>';
+    }
+  }
+  loadTeamRoster();
 </script>
 </body>
 </html>

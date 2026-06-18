@@ -34,7 +34,7 @@
       box-shadow: 0 6px 20px rgba(0,0,0,0.12); transition: transform 0.15s;
     }
     .team-card:hover { transform: translateY(-3px); }
-    .team-flag { font-size: 32px; }
+    .team-flag { font-size: 32px; width: 40px; height: 28px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
     .team-name { font-weight: 700; font-size: 15px; }
     .team-meta { font-size: 12px; color: #999; margin-top: 2px; }
     .empty { color: var(--white); font-size: 14px; text-align: center; padding: 60px 0; opacity: 0.9; }
@@ -46,12 +46,14 @@
     <a class="back-btn" href="/venues">← Venues</a>
     <span class="header-title">FIFA World Cup 2026™</span>
   </div>
+  <a class="back-btn" href="/standings">Standings →</a>
 </header>
 <div class="page">
   <div class="page-title">Teams</div>
   <div class="grid" th:if="${teams != null and !teams.isEmpty()}">
     <a class="team-card" th:each="team : ${teams}" th:href="@{/teams/{id}(id=${team.id})}">
-      <div class="team-flag" th:text="${team.flag} ?: '🏳️'"></div>
+      <img class="team-flag" th:if="${team.flag}" th:src="${team.flag}" alt=""/>
+      <div class="team-flag" th:unless="${team.flag}" style="display:flex;align-items:center;justify-content:center;">🏳️</div>
       <div>
         <div class="team-name" th:text="${team.name}"></div>
         <div class="team-meta" th:text="${team.groupName != null ? 'Group ' + team.groupName : (team.tla ?: '')}"></div>

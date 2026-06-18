@@ -1,6 +1,8 @@
 package com.zipcode.worldcuptracker.controller;
 
+import com.zipcode.worldcuptracker.model.Player;
 import com.zipcode.worldcuptracker.model.Team;
+import com.zipcode.worldcuptracker.service.PlayerService;
 import com.zipcode.worldcuptracker.service.TeamService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -13,9 +15,11 @@ import java.util.List;
 public class TeamController {
 
     private final TeamService teamService;
+    private final PlayerService playerService;
 
-    public TeamController(TeamService teamService) {
+    public TeamController(TeamService teamService, PlayerService playerService) {
         this.teamService = teamService;
+        this.playerService = playerService;
     }
 
     // ── Thymeleaf pages ───────────────────────────────────────────────────────
@@ -57,5 +61,12 @@ public class TeamController {
         return teamService.getTeamById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    /** GET /api/teams/{id}/players */
+    @GetMapping("/api/teams/{id}/players")
+    @ResponseBody
+    public ResponseEntity<List<Player>> apiTeamPlayers(@PathVariable Long id) {
+        return ResponseEntity.ok(playerService.getPlayersByTeam(id));
     }
 }

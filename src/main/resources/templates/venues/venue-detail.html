@@ -194,6 +194,8 @@
     .weather-error { font-size: 13px; color: #aaa; text-align: center; padding: 16px 0; }
 
     /* ── Match schedule rows ─────────────────────────────────────── */
+    .match-row-link { display: block; text-decoration: none; color: inherit; transition: background 0.15s; }
+    .match-row-link:hover { background: rgba(255,107,53,0.06); }
     .match-row {
       display: flex; align-items: center; justify-content: space-between;
       gap: 10px; padding: 10px 4px; border-bottom: 1px solid rgba(0,0,0,0.06);
@@ -345,6 +347,7 @@
     <nav style="display:flex;gap:10px;margin-left:6px">
       <a href="/teams" style="color:#fff;font-size:12px;font-weight:700;text-decoration:none;opacity:0.9">Teams</a>
       <a href="/matches" style="color:#fff;font-size:12px;font-weight:700;text-decoration:none;opacity:0.9">Matches</a>
+      <a href="/standings" style="color:#fff;font-size:12px;font-weight:700;text-decoration:none;opacity:0.9">Standings</a>
     </nav>
   </div>
   <a class="back-btn" id="backBtn" th:href="@{/venues}">← Venue Explorer</a>
@@ -787,16 +790,18 @@
           : (date || '—');
 
         return `
-          <div class="match-row">
-            <div>
-              <div class="match-teams">${home} vs ${away}</div>
-              <div class="match-meta">${m.stage ? m.stage.replaceAll('_',' ') : ''}${m.groupName ? ' · Group ' + m.groupName : ''}</div>
+          <a class="match-row-link" href="/matches/${m.id}">
+            <div class="match-row">
+              <div>
+                <div class="match-teams">${home} vs ${away}</div>
+                <div class="match-meta">${m.stage ? m.stage.replaceAll('_',' ') : ''}${m.groupName ? ' · Group ' + m.groupName : ''}</div>
+              </div>
+              <div style="text-align:right">
+                <div class="match-score">${score}</div>
+                <div class="match-status">${m.status || ''}</div>
+              </div>
             </div>
-            <div style="text-align:right">
-              <div class="match-score">${score}</div>
-              <div class="match-status">${m.status || ''}</div>
-            </div>
-          </div>
+          </a>
         `;
       }).join('');
     } catch (e) {
@@ -904,6 +909,20 @@
       { name: 'Parque Fundidora',         type: 'Park',       icon: '🌳', dist: '13 km' },
       { name: 'Barrio Antiguo',           type: 'Historic',   icon: '🏘️', dist: '15 km' },
       { name: 'Grutas de García',         type: 'Nature',     icon: '🦇', dist: '40 km' },
+    ],
+    15: [ // Mercedes-Benz Stadium — Atlanta
+      { name: 'World of Coca-Cola',       type: 'Museum',     icon: '🥤', dist: '1 km'  },
+      { name: 'Georgia Aquarium',         type: 'Aquarium',   icon: '🐠', dist: '1 km'  },
+      { name: 'Centennial Olympic Park',  type: 'Park',       icon: '🏟️', dist: '1 km'  },
+      { name: 'Atlanta History Center',   type: 'Museum',     icon: '🏛️', dist: '8 km'  },
+      { name: 'Martin Luther King Jr. National Historical Park', type: 'Historic', icon: '✊', dist: '5 km' },
+    ],
+    16: [ // NRG Stadium — Houston
+      { name: 'Houston Space Center',     type: 'Museum',     icon: '🚀', dist: '40 km' },
+      { name: 'Museum of Fine Arts Houston', type: 'Museum',  icon: '🖼️', dist: '12 km' },
+      { name: 'Houston Zoo',              type: 'Zoo',        icon: '🦁', dist: '10 km' },
+      { name: 'Buffalo Bayou Park',       type: 'Park',       icon: '🌳', dist: '11 km' },
+      { name: 'Downtown Aquarium',        type: 'Aquarium',   icon: '🐟', dist: '12 km' },
     ],
   };
 

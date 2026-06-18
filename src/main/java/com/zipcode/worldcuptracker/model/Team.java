@@ -26,7 +26,8 @@ public class Team {
     /** Three-letter code, e.g. "BRA" */
     private String tla;
 
-    /** Emoji flag, e.g. 🇧🇷 */
+    /** URL to the country's flag image (SVG), from football-data.org's area.flag */
+    @Column(name = "flag", length = 512)
     private String flag;
 
     /** URL to the team's crest/badge image */

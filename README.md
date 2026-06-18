@@ -48,7 +48,7 @@ World Cup Tracker is a full-stack Java capstone project that brings the World Cu
 | ORM | Spring Data JPA / Hibernate |
 | External APIs | FIFA / football-data.org / API-Football |
 | Maps | Google Maps JavaScript API (or Leaflet.js) |
-| AI Commentary | Anthropic Claude API (or OpenAI) |
+| AI Commentary | Google Gemini API |
 | Frontend | HTML/CSS, Bootstrap, vanilla JS |
 | Testing | JUnit 5, Mockito |
 
@@ -99,18 +99,24 @@ Commentary    — id, match_id, content, generated_at
 ## API Integrations
 
 ### Sports Data
-- **[football-data.org](https://www.football-data.org/)** — Free tier available; teams, matches, standings
-- **[API-Football](https://www.api-football.com/)** — Richer event/lineups data; freemium
-- **[ESPN / ESPN API (unofficial)](https://gist.github.com/akeaswaran/b48b02f1c94f873c6655e7129910fc3b)** — Scores and stats
+- **[football-data.org](https://www.football-data.org/)** — Free tier; teams, matches, standings, group stage. Free tier excludes player-level data (lineups/cards/subs) — that's gated behind a paid "deep data pack."
+- **[ESPN (unofficial hidden API)](https://gist.github.com/akeaswaran/b48b02f1c94f873c6655e7129910fc3b)** — Active source for match timeline events and statistics. No API key, no account, no plan tier — and unlike the two providers below, it's actually serving real 2026 World Cup data today. Does not expose starting lineups/formations.
+- **[API-Football](https://www.api-football.com/)** — Integration is built (fixture mapping, lineups/stats/events sync) but currently dormant: api-football.com's free plan only covers seasons 2022–2024, so it returns no data for the 2026 tournament unless upgraded to a paid plan. Kept in place as a fallback lineups source for if/when that happens.
+- **[Highlightly Football API](https://highlightly.net/football-api/)** — Active source for starting lineups/formations, the one gap ESPN and the dormant API-Football integration leave open. Free "Basic" plan: 100 requests/day, no card required. FIFA World Cup is league id 1635 there, with real 2026 match data and lineups confirmed live (verified against a finished match's actual starting XI). Output is normalized into the same shape API-Football used, so match-detail.html's rendering needs no changes regardless of which provider supplied the data.
 
 ### Maps
 - **Google Maps JavaScript API** — Venue pins, info windows, styled map
 - **Leaflet.js + OpenStreetMap** — Open-source alternative; no API key required
 
 ### AI Commentary
-- **Anthropic Claude API** — Generates pre-match tactical breakdowns
+- **Google Gemini API** — Generates pre-match tactical breakdowns. Chosen over Anthropic/OpenAI
+  because their APIs are billed separately from any chat subscription (ChatGPT Plus/Claude Pro
+  don't include API access), whereas Gemini's free tier (1,500 requests/day, no credit card) is
+  more than enough for one cached generation per match. Get a key at
+  [aistudio.google.com](https://aistudio.google.com) → "Get API key".
 - Prompt is engineered to produce color commentary only — no winner predictions
-- Commentary is cached in the database to avoid redundant API calls
+- Commentary is generated lazily on first request per match (`GET /api/matches/{id}/commentary`)
+  and cached in the `commentary` table to avoid redundant API calls
 
 ---
 
@@ -121,7 +127,7 @@ Commentary    — id, match_id, content, generated_at
 - Java 21+
 - Maven 3.9+
 - PostgreSQL 15+
-- API keys for: sports data provider, maps, and AI (Claude or OpenAI)
+- API keys for: sports data provider, maps, and AI (Google Gemini)
 
 ### Clone & Configure
 
@@ -140,7 +146,7 @@ spring.datasource.password=your_db_password
 
 api.football.key=YOUR_SPORTS_API_KEY
 api.maps.key=YOUR_MAPS_API_KEY
-api.anthropic.key=YOUR_CLAUDE_API_KEY
+api.gemini.key=YOUR_GEMINI_KEY
 ```
 
 ### Run

@@ -15,6 +15,8 @@ INSERT INTO venues (id, name, city, country, flag, capacity, lat, lng, image_url
 (7,  'Lincoln Financial Field', 'Philadelphia',          'USA',    '🇺🇸', 69796,  39.9008, -75.1675,  '/images/USA/Lincoln',   '#B22234'),
 (8,  'Arrowhead Stadium',       'Kansas City',           'USA',    '🇺🇸', 76416,  39.0489, -94.4839,  '/images/USA/Arrowhead', '#B22234'),
 (9,  'Lumen Field',             'Seattle',               'USA',    '🇺🇸', 68740,  47.5952, -122.3316, '/images/USA/Lumen',     '#B22234'),
+(15, 'Mercedes-Benz Stadium',   'Atlanta',               'USA',    '🇺🇸', 71000,  33.7553, -84.4006,  '/images/USA/MercedesBenz', '#B22234'),
+(16, 'NRG Stadium',             'Houston',               'USA',    '🇺🇸', 72220,  29.6847, -95.4107,  '/images/USA/NRG',       '#B22234'),
 
 -- Canada
 (10, 'BC Place',                'Vancouver',             'Canada', '🇨🇦', 54500,  49.2768, -123.1115, '/images/Canada/bcplace',  '#FF0000'),

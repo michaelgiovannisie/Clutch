@@ -17,4 +17,12 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     List<Match> findByVenueIdOrderByUtcDateAsc(Long venueId);
 
     List<Match> findByHomeTeamIdOrAwayTeamIdOrderByUtcDateAsc(Long homeTeamId, Long awayTeamId);
+
+    List<Match> findByGroupNameAndStatus(String groupName, String status);
+
+    List<Match> findByGroupName(String groupName);
+
+    @org.springframework.data.jpa.repository.Query(
+            "SELECT DISTINCT m.groupName FROM Match m WHERE m.groupName IS NOT NULL")
+    List<String> findDistinctGroupNames();
 }

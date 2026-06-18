@@ -55,4 +55,39 @@ public class Match {
 
     /** "HOME_TEAM", "AWAY_TEAM", "DRAW", or null if not finished */
     private String winner;
+
+    /**
+     * Fixture id from api-football.com (v3, league=1/season=2026 for the World
+     * Cup), used to pull lineups/stats/events that football-data.org's free
+     * tier doesn't expose. Null until matched by date + team names.
+     */
+    @Column(name = "api_football_fixture_id")
+    private Long apiFootballFixtureId;
+
+    /**
+     * Match id from the Highlightly Football API (soccer.highlightly.net),
+     * used to pull starting lineups/formations — the one data point
+     * api-football.com's free tier can't provide for World Cup 2026 (season
+     * restricted) and ESPN's hidden scoreboard endpoint doesn't expose at all.
+     * Null until matched by date + team names.
+     */
+    @Column(name = "highlightly_match_id")
+    private Long highlightlyMatchId;
+
+    /**
+     * Raw JSON array, normalized into the same shape api-football.com used
+     * ([{team:{name}, formation, startXI:[{player:{name,number}}], coach}, ...])
+     * regardless of which provider (api-football.com or Highlightly) actually
+     * supplied it, so match-detail.html's rendering JS needs no changes.
+     */
+    @Column(name = "lineups_json", columnDefinition = "TEXT")
+    private String lineupsJson;
+
+    /** Raw JSON array from api-football.com's /fixtures/statistics. */
+    @Column(name = "statistics_json", columnDefinition = "TEXT")
+    private String statisticsJson;
+
+    /** Raw JSON array from api-football.com's /fixtures/events (the match timeline). */
+    @Column(name = "events_json", columnDefinition = "TEXT")
+    private String eventsJson;
 }

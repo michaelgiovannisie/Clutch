@@ -25,11 +25,23 @@
     }
     .back-btn:hover { background: rgba(255,255,255,0.32); }
     .header-title { font-size: 14px; font-weight: 800; color: var(--white); letter-spacing: 1px; text-transform: uppercase; }
-    .page { max-width: 700px; margin: 0 auto; padding: 32px 40px 60px; }
+    .page {
+      max-width: 1200px; margin: 0 auto; padding: 32px 40px 60px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    }
     .card { background: var(--white); border-radius: var(--radius); padding: 28px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); }
+    .card-full { grid-column: 1 / -1; }
+    .commentary-body { font-size: 14px; line-height: 1.65; color: #444; }
+    .commentary-body p { margin-bottom: 14px; }
+    .commentary-body p:last-child { margin-bottom: 0; }
+    @media (min-width: 900px) { .commentary-body { column-count: 2; column-gap: 36px; } }
+    @media (max-width: 760px) { .page { grid-template-columns: 1fr; } }
     .matchup { display: flex; align-items: center; justify-content: center; gap: 28px; }
     .team-col { text-align: center; }
-    .team-flag { font-size: 48px; }
+    .team-badges { display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .team-flag { width: 56px; height: 40px; object-fit: cover; border-radius: 4px; }
+    .team-flag-placeholder { font-size: 40px; }
+    .team-crest { width: 32px; height: 32px; object-fit: contain; }
     .team-name { font-weight: 800; font-size: 16px; margin-top: 6px; }
     .score { font-size: 32px; font-weight: 800; color: var(--orange); }
     .vs { font-size: 13px; color: #999; font-weight: 700; }
@@ -38,6 +50,32 @@
       background: rgba(255,107,53,0.08); border: 1px solid rgba(255,107,53,0.2);
       border-radius: 20px; padding: 5px 14px; color: var(--dark); font-weight: 600;
     }
+    .meta-pill-link { text-decoration: none; display: inline-block; }
+    .meta-pill-link:hover { background: rgba(255,107,53,0.16); }
+    .card-title { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #999; margin-bottom: 14px; }
+    .empty { font-size: 13px; color: #aaa; text-align: center; padding: 16px 0; }
+
+    /* Timeline */
+    .timeline-event { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 13px; }
+    .timeline-event:last-child { border-bottom: none; }
+    .timeline-minute { font-weight: 800; color: var(--orange); width: 40px; flex-shrink: 0; text-align: right; }
+    .timeline-icon { width: 20px; text-align: center; flex-shrink: 0; }
+    .timeline-detail { color: #888; font-size: 11px; }
+
+    /* Statistics */
+    .stat-row { margin-bottom: 12px; }
+    .stat-labels { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+    .stat-type { color: #999; font-weight: 600; text-transform: uppercase; font-size: 10.5px; text-align: center; flex: 1; }
+    .stat-bar { display: flex; height: 6px; border-radius: 4px; overflow: hidden; background: #eee; }
+    .stat-bar-home { background: var(--orange); }
+    .stat-bar-away { background: var(--pink); }
+
+    /* Lineups */
+    .lineup-cols { display: flex; gap: 20px; }
+    .lineup-col { flex: 1; min-width: 0; }
+    .lineup-formation { font-size: 11px; color: #999; margin-bottom: 8px; }
+    .lineup-player { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 4px 0; }
+    .lineup-number { font-weight: 800; color: var(--orange); width: 22px; text-align: center; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -48,27 +86,167 @@
   </div>
 </header>
 <div class="page">
-  <div class="card">
+  <div class="card card-full">
     <div class="matchup">
       <div class="team-col">
-        <div class="team-flag" th:text="${match.homeTeam != null ? (match.homeTeam.flag ?: '🏳️') : '🏳️'}"></div>
+        <img class="team-flag" th:if="${match.homeTeam != null and match.homeTeam.flag != null}" th:src="${match.homeTeam.flag}" alt=""/>
+        <div class="team-flag-placeholder" th:unless="${match.homeTeam != null and match.homeTeam.flag != null}">🏳️</div>
         <div class="team-name" th:text="${match.homeTeam != null ? match.homeTeam.name : 'TBD'}"></div>
       </div>
       <div class="score" th:if="${match.status == 'FINISHED' and match.homeScore != null}"
            th:text="${match.homeScore + ' – ' + match.awayScore}"></div>
       <div class="vs" th:unless="${match.status == 'FINISHED' and match.homeScore != null}">VS</div>
       <div class="team-col">
-        <div class="team-flag" th:text="${match.awayTeam != null ? (match.awayTeam.flag ?: '🏳️') : '🏳️'}"></div>
+        <img class="team-flag" th:if="${match.awayTeam != null and match.awayTeam.flag != null}" th:src="${match.awayTeam.flag}" alt=""/>
+        <div class="team-flag-placeholder" th:unless="${match.awayTeam != null and match.awayTeam.flag != null}">🏳️</div>
         <div class="team-name" th:text="${match.awayTeam != null ? match.awayTeam.name : 'TBD'}"></div>
       </div>
     </div>
     <div class="meta-row">
+      <span class="meta-pill" id="matchDateTime" th:if="${match.utcDate != null}"></span>
       <span class="meta-pill" th:if="${match.stage != null}" th:text="${#strings.replace(match.stage,'_',' ')}"></span>
       <span class="meta-pill" th:if="${match.groupName != null}" th:text="'Group ' + ${match.groupName}"></span>
-      <span class="meta-pill" th:if="${match.venue != null}" th:text="${match.venue.name}"></span>
+      <a class="meta-pill meta-pill-link" th:if="${match.venue != null}" th:href="@{/venues/{id}(id=${match.venue.id})}"
+         th:text="${match.venue.name + (match.venue.city != null ? ' — ' + match.venue.city : '')}"></a>
       <span class="meta-pill" th:text="${match.status}"></span>
     </div>
   </div>
+
+  <div class="card card-full">
+    <div class="card-title">AI Color Commentary</div>
+    <div id="matchCommentary" class="commentary-body"><div class="empty">Loading…</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Timeline</div>
+    <div id="matchEvents"><div class="empty">Loading…</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Statistics</div>
+    <div id="matchStatistics"><div class="empty">Loading…</div></div>
+  </div>
+
+  <div class="card card-full">
+    <div class="card-title">Lineups</div>
+    <div id="matchLineups"><div class="empty">Loading…</div></div>
+  </div>
 </div>
+
+<div id="matchData"
+     th:data-id="${match.id}"
+     th:data-home="${match.homeTeam != null ? match.homeTeam.name : ''}"
+     th:data-away="${match.awayTeam != null ? match.awayTeam.name : ''}"
+     th:data-utc="${match.utcDate}"
+     style="display:none"></div>
+<script>
+  const matchData = document.getElementById('matchData').dataset;
+  const matchId = matchData.id;
+
+  if (matchData.utc) {
+    const dt = new Date(matchData.utc);
+    const el = document.getElementById('matchDateTime');
+    if (el) {
+      el.textContent = dt.toLocaleString(undefined, {
+        weekday: 'short', month: 'short', day: 'numeric',
+        hour: 'numeric', minute: '2-digit'
+      });
+    }
+  }
+
+  const EVENT_ICONS = { 'Goal': '⚽', 'Card': '🟨', 'subst': '🔁', 'Var': '📺' };
+
+  async function loadMatchEvents() {
+    const body = document.getElementById('matchEvents');
+    try {
+      const events = await fetch(`/api/matches/${matchId}/events`).then(r => r.json());
+      if (!events || events.length === 0) {
+        body.innerHTML = '<div class="empty">No timeline data yet — available shortly after kickoff.</div>';
+        return;
+      }
+      body.innerHTML = events.map(e => {
+        const minute = (e.time?.elapsed ?? '') + (e.time?.extra ? '+' + e.time.extra : '') + "'";
+        const icon = EVENT_ICONS[e.type] || '•';
+        const player = e.player?.name || '';
+        const team = e.team?.name || '';
+        const detail = e.detail || '';
+        return `<div class="timeline-event">
+          <div class="timeline-minute">${minute}</div>
+          <div class="timeline-icon">${icon}</div>
+          <div><strong>${player}</strong> (${team}) <span class="timeline-detail">${detail}</span></div>
+        </div>`;
+      }).join('');
+    } catch (e) {
+      body.innerHTML = '<div class="empty">Timeline unavailable right now.</div>';
+    }
+  }
+
+  async function loadMatchStatistics() {
+    const body = document.getElementById('matchStatistics');
+    try {
+      const stats = await fetch(`/api/matches/${matchId}/statistics`).then(r => r.json());
+      if (!stats || stats.length < 2) {
+        body.innerHTML = '<div class="empty">No statistics yet — available shortly after kickoff.</div>';
+        return;
+      }
+      const [home, away] = stats;
+      const rows = home.statistics.map((stat, i) => {
+        const homeVal = stat.value;
+        const awayVal = away.statistics[i] ? away.statistics[i].value : null;
+        const homeNum = parseFloat(homeVal) || 0;
+        const awayNum = parseFloat(awayVal) || 0;
+        const total = homeNum + awayNum || 1;
+        const homePct = (homeNum / total) * 100;
+        return `<div class="stat-row">
+          <div class="stat-labels"><span>${homeVal ?? '–'}</span><span class="stat-type">${stat.type}</span><span>${awayVal ?? '–'}</span></div>
+          <div class="stat-bar"><div class="stat-bar-home" style="width:${homePct}%"></div><div class="stat-bar-away" style="width:${100 - homePct}%"></div></div>
+        </div>`;
+      }).join('');
+      body.innerHTML = rows;
+    } catch (e) {
+      body.innerHTML = '<div class="empty">Statistics unavailable right now.</div>';
+    }
+  }
+
+  async function loadMatchLineups() {
+    const body = document.getElementById('matchLineups');
+    try {
+      const lineups = await fetch(`/api/matches/${matchId}/lineups`).then(r => r.json());
+      if (!lineups || lineups.length < 2) {
+        body.innerHTML = '<div class="empty">Starting lineups aren’t available from our free data sources right now.</div>';
+        return;
+      }
+      const col = (team) => `
+        <div class="lineup-col">
+          <div class="team-name">${team.team.name}</div>
+          <div class="lineup-formation">Formation: ${team.formation ?? '–'}</div>
+          ${team.startXI.map(p => `<div class="lineup-player"><span class="lineup-number">${p.player.number ?? ''}</span><span>${p.player.name}</span></div>`).join('')}
+        </div>`;
+      body.innerHTML = `<div class="lineup-cols">${col(lineups[0])}${col(lineups[1])}</div>`;
+    } catch (e) {
+      body.innerHTML = '<div class="empty">Lineups unavailable right now.</div>';
+    }
+  }
+
+  async function loadMatchCommentary() {
+    const body = document.getElementById('matchCommentary');
+    try {
+      const data = await fetch(`/api/matches/${matchId}/commentary`).then(r => r.json());
+      if (data.error) {
+        body.innerHTML = `<div class="empty">${data.error}</div>`;
+        return;
+      }
+      const paragraphs = data.content.split(/\n+/).filter(p => p.trim().length > 0);
+      body.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
+    } catch (e) {
+      body.innerHTML = '<div class="empty">Commentary unavailable right now.</div>';
+    }
+  }
+
+  loadMatchCommentary();
+  loadMatchEvents();
+  loadMatchStatistics();
+  loadMatchLineups();
+</script>
 </body>
 </html>

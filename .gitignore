@@ -22,3 +22,11 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Build output — shouldn't be tracked, and ends up containing a compiled copy
+# of application.properties (with real API keys) every time you build.
+target/
+
+# Real config with live API keys — only application.example.properties (the
+# placeholder template) should be committed.
+src/main/resources/application.properties
