@@ -23,6 +23,4 @@ INSERT INTO venues (id, name, city, country, flag, capacity, lat, lng, image_url
 -- Mexico
 (12, 'Estadio Azteca',          'Mexico City',           'Mexico', '🇲🇽', 87523,  19.3029, -99.1505,  '/images/Mexico/azteca', '#006847'),
 (13, 'Estadio Akron',           'Guadalajara',           'Mexico', '🇲🇽', 45456,  20.6867, -103.4670, '/images/Mexico/akron',  '#006847'),
-(14, 'Estadio BBVA',            'Monterrey',             'Mexico', '🇲🇽', 53500,  25.6693, -100.2440, '/images/Mexico/BBVA',   '#006847')
-
-ON CONFLICT (id) DO UPDATE SET image_url = EXCLUDED.image_url;
+(14, 'Estadio BBVA',            'Monterrey',             'Mexico', '🇲🇽', 53500,  25.6693, -100.2440, '/images/Mexico/BBVA',   '#006847');
