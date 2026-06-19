@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { matches, getUniqueDates, getMatchesByDate } from '../lib/matches.js';
+import { fetchMatches } from '../lib/api.js';
 import { useFavorites } from '../context/FavoritesContext.jsx';
 import Flag from '../components/Flag.jsx';
 import Pill from '../components/Pill.jsx';
@@ -61,13 +61,32 @@ function MatchRow({ match }) {
 }
 
 export default function Matches() {
-  const dates = useMemo(() => getUniqueDates(), []);
-  const clampedToday = dates.includes(TODAY) ? TODAY : dates[0];
-  const [selectedDate, setSelectedDate] = useState(clampedToday);
+  const [allMatches, setAllMatches] = useState([]);
   const [filter, setFilter] = useState('all');
   const { favoriteTeams, starredMatches } = useFavorites();
 
-  const dayMatches = useMemo(() => getMatchesByDate(selectedDate), [selectedDate]);
+  useEffect(() => {
+    fetchMatches().then(setAllMatches);
+  }, []);
+
+  const dates = useMemo(
+    () => [...new Set(allMatches.map(m => m.date).filter(Boolean))].sort(),
+    [allMatches]
+  );
+  const clampedToday = dates.includes(TODAY) ? TODAY : (dates[0] ?? TODAY);
+  const [selectedDate, setSelectedDate] = useState(clampedToday);
+
+  // Keep selectedDate in sync once dates load
+  useEffect(() => {
+    if (dates.length && !dates.includes(selectedDate)) {
+      setSelectedDate(clampedToday);
+    }
+  }, [dates]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const dayMatches = useMemo(
+    () => allMatches.filter(m => m.date === selectedDate),
+    [allMatches, selectedDate]
+  );
 
   const visible = useMemo(() => {
     if (filter === 'starred') return dayMatches.filter(m => starredMatches.has(m.id));
@@ -94,7 +113,7 @@ export default function Matches() {
         </button>
         {dates.map(d => {
           const dt = new Date(d + 'T12:00:00');
-          const hasStarred = matches.filter(m => m.date === d).some(m => starredMatches.has(m.id));
+          const hasStarred = allMatches.filter(m => m.date === d).some(m => starredMatches.has(m.id));
           return (
             <button
               key={d}
@@ -124,7 +143,11 @@ export default function Matches() {
 
       {/* Match list */}
       <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-card)', border: '1px solid var(--border)', overflow: 'hidden' }}>
-        {visible.length === 0 ? (
+        {allMatches.length === 0 ? (
+          <p style={{ padding: '24px 16px', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
+            Loading matches…
+          </p>
+        ) : visible.length === 0 ? (
           <p style={{ padding: '24px 16px', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
             {filter === 'starred'
               ? 'No starred matches yet — tap ☆ on a match to add it.'

@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getMatchById } from '../lib/matches.js';
+import { fetchMatchById } from '../lib/api.js';
 import { useFavorites } from '../context/FavoritesContext.jsx';
 import Flag from '../components/Flag.jsx';
 import Crest from '../components/Crest.jsx';
@@ -14,13 +15,28 @@ function formatKickoff(iso) {
 
 export default function MatchDetail() {
   const { id } = useParams();
-  const match = getMatchById(id);
+  const [match, setMatch] = useState(null);
+  const [loading, setLoading] = useState(true);
   const { isStarredMatch, toggleMatch } = useFavorites();
+
+  useEffect(() => {
+    setLoading(true);
+    fetchMatchById(id).then(m => { setMatch(m); setLoading(false); });
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="page">
+        <Link to="/matches" className="back-link" style={{ display: 'inline-block', marginBottom: 16 }}>← Matches</Link>
+        <p style={{ color: 'var(--text-muted)' }}>Loading…</p>
+      </div>
+    );
+  }
 
   if (!match) {
     return (
       <div className="page">
-        <Link to="/matches" className="back-link">← Matches</Link>
+        <Link to="/matches" className="back-link" style={{ display: 'inline-block', marginBottom: 16 }}>← Matches</Link>
         <h1 className="page-title">Match not found</h1>
       </div>
     );
@@ -62,11 +78,9 @@ export default function MatchDetail() {
 
       {/* Info bar */}
       <div className="match-detail-info">
-        <span>{formatKickoff(match.kickoff)}</span>
-        <span className="match-detail-info-sep">·</span>
-        <span>{match.venueName}</span>
-        <span className="match-detail-info-sep">·</span>
-        <span>{match.city}</span>
+        {match.kickoff && <span>{formatKickoff(match.kickoff)}</span>}
+        {match.venueName && <><span className="match-detail-info-sep">·</span><span>{match.venueName}</span></>}
+        {match.city && <><span className="match-detail-info-sep">·</span><span>{match.city}</span></>}
         <button
           className={'match-row-star match-detail-star' + (starred ? ' is-starred' : '')}
           aria-label={starred ? 'Remove from watchlist' : 'Add to watchlist'}

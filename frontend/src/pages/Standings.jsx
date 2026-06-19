@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { groups as rawGroups } from '../data/mockStandings.js';
+import { useState, useEffect, useMemo } from 'react';
+import { groups as mockGroups } from '../data/mockStandings.js';
 import { annotateGroups, getProjectedQualifiers, getRankedThirds } from '../lib/standings.js';
 import { BRACKET_SLOTS, resolveSlot } from '../lib/bracketTemplate.js';
+import { fetchStandings } from '../lib/api.js';
 import Tabs from '../components/Tabs.jsx';
 import Legend from '../components/Legend.jsx';
 import GroupTable from '../components/GroupTable.jsx';
@@ -15,14 +16,19 @@ const TABS = [
 
 export default function Standings() {
   const [tab, setTab] = useState('group');
-  const annotated = annotateGroups(rawGroups);
-  const thirds     = getRankedThirds(rawGroups);
-  const { winners, runnersUp, bestThirds } = getProjectedQualifiers(rawGroups);
-  const matchups = BRACKET_SLOTS.map(slot => ({
+  const [rawGroups, setRawGroups] = useState(mockGroups);
+
+  useEffect(() => {
+    fetchStandings().then(setRawGroups);
+  }, []);
+
+  const annotated = useMemo(() => annotateGroups(rawGroups), [rawGroups]);
+  const { winners, runnersUp, bestThirds } = useMemo(() => getProjectedQualifiers(rawGroups), [rawGroups]);
+  const matchups = useMemo(() => BRACKET_SLOTS.map(slot => ({
     id:   slot.id,
     home: resolveSlot(slot.home, { winners, runnersUp }),
     away: resolveSlot(slot.away, { winners, runnersUp }),
-  }));
+  })), [winners, runnersUp]);
 
   return (
     <div>
