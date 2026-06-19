@@ -1,5 +1,89 @@
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
+import { getMatchById } from '../lib/matches.js';
+import { useFavorites } from '../context/FavoritesContext.jsx';
+import Flag from '../components/Flag.jsx';
+import Crest from '../components/Crest.jsx';
+import Pill from '../components/Pill.jsx';
+
+function formatKickoff(iso) {
+  return new Date(iso).toLocaleString(undefined, {
+    weekday: 'short', month: 'short', day: 'numeric',
+    hour: 'numeric', minute: '2-digit',
+  });
+}
+
 export default function MatchDetail() {
   const { id } = useParams();
-  return <div className="page"><h1 className="page-title">Match {id}</h1><p className="page-subtitle">Match detail — coming soon.</p></div>;
+  const match = getMatchById(id);
+  const { isStarredMatch, toggleMatch } = useFavorites();
+
+  if (!match) {
+    return (
+      <div className="page">
+        <Link to="/matches" className="back-link">← Matches</Link>
+        <h1 className="page-title">Match not found</h1>
+      </div>
+    );
+  }
+
+  const starred = isStarredMatch(match.id);
+  const isLive = match.status === 'LIVE';
+  const isFinished = match.status === 'FINISHED';
+
+  return (
+    <div className="page">
+      <Link to="/matches" className="back-link" style={{ display: 'inline-block', marginBottom: 16 }}>← Matches</Link>
+
+      {/* Hero matchup card */}
+      <div className="match-detail-hero">
+        <div className="match-detail-team">
+          <Flag slug={match.home.slug} alt={match.home.name} className="match-detail-flag" />
+          <Crest slug={match.home.slug} size="lg" alt={match.home.name} />
+          <span className="match-detail-name">{match.home.name}</span>
+          <span className="match-detail-abbr">{match.home.abbr}</span>
+        </div>
+
+        <div className="match-detail-score-block">
+          {isLive && <Pill tone="live">LIVE {match.minute}'</Pill>}
+          {isFinished && <Pill tone="neutral">Full Time</Pill>}
+          <div className="match-detail-score">
+            {isLive || isFinished ? `${match.homeScore} – ${match.awayScore}` : 'vs'}
+          </div>
+          <span className="match-detail-stage">{match.stage}</span>
+        </div>
+
+        <div className="match-detail-team">
+          <Flag slug={match.away.slug} alt={match.away.name} className="match-detail-flag" />
+          <Crest slug={match.away.slug} size="lg" alt={match.away.name} />
+          <span className="match-detail-name">{match.away.name}</span>
+          <span className="match-detail-abbr">{match.away.abbr}</span>
+        </div>
+      </div>
+
+      {/* Info bar */}
+      <div className="match-detail-info">
+        <span>{formatKickoff(match.kickoff)}</span>
+        <span className="match-detail-info-sep">·</span>
+        <span>{match.venueName}</span>
+        <span className="match-detail-info-sep">·</span>
+        <span>{match.city}</span>
+        <button
+          className={'match-row-star match-detail-star' + (starred ? ' is-starred' : '')}
+          aria-label={starred ? 'Remove from watchlist' : 'Add to watchlist'}
+          aria-pressed={starred}
+          onClick={() => toggleMatch(match.id)}
+        >
+          {starred ? '★' : '☆'} {starred ? 'Watching' : 'Watch'}
+        </button>
+      </div>
+
+      {/* AI commentary slot */}
+      <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-card)', border: '1px solid var(--border)', overflow: 'hidden', marginTop: 20 }}>
+        <div className="card-header section-title">AI Commentary</div>
+        <p style={{ padding: '16px', color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>
+          Commentary coming soon — check back after kickoff.
+        </p>
+      </div>
+    </div>
+  );
 }

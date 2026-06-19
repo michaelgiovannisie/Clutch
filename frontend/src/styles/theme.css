@@ -1005,6 +1005,299 @@ body {
   color: #fff;
 }
 
+/* ── Date navigator ────────────────────────────────────────────────────── */
+.date-nav {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+}
+.date-nav::-webkit-scrollbar { display: none; }
+
+.date-nav-today {
+  flex-shrink: 0;
+}
+
+.date-nav-day {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+  color: var(--text-muted);
+  min-width: 46px;
+  position: relative;
+}
+.date-nav-day:hover {
+  border-color: var(--orange);
+  color: var(--text);
+}
+.date-nav-day.is-selected {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: #fff;
+}
+.day-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: inherit;
+  line-height: 1;
+}
+.day-mon {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: inherit;
+  opacity: 0.8;
+  line-height: 1;
+}
+.day-star {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--orange);
+  margin-top: 2px;
+}
+.date-nav-day.is-selected .day-star {
+  background: #fff;
+}
+
+/* ── Match row ──────────────────────────────────────────────────────────── */
+.match-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.match-row:last-child { border-bottom: none; }
+.match-row:hover { background: var(--surface-2); }
+
+.match-row-status {
+  width: 64px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.match-row-time {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+.match-row-minute {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.match-row-teams {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.match-row-team {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+.match-row-home { justify-content: flex-end; }
+.match-row-away { justify-content: flex-start; }
+
+.match-row-flag {
+  width: 22px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.match-row-abbr {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  color: var(--text);
+  white-space: nowrap;
+}
+.match-row-score {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+  min-width: 44px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.match-row-venue {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+  display: none;
+}
+@media (min-width: 640px) {
+  .match-row-venue { display: block; }
+}
+
+.match-row-star {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 2px;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  transition: color 0.1s, transform 0.12s;
+  line-height: 1;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .match-row-star:hover { transform: scale(1.2); }
+}
+.match-row-star.is-starred { color: var(--orange); }
+
+/* ── Match detail ───────────────────────────────────────────────────────── */
+.match-detail-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 24px 20px;
+  margin-bottom: 12px;
+}
+.match-detail-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+.match-detail-flag {
+  width: 48px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.match-detail-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  text-align: center;
+}
+.match-detail-abbr {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.match-detail-score-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.match-detail-score {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.2rem;
+  color: var(--text);
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+.match-detail-stage {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.match-detail-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 10px 16px;
+  margin-bottom: 4px;
+}
+.match-detail-info-sep { opacity: 0.4; }
+.match-detail-star {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  padding: 4px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+}
+.match-detail-star.is-starred {
+  border-color: var(--orange);
+  background: rgba(255,107,53,0.08);
+}
+
+/* ── Team card fav button ───────────────────────────────────────────────── */
+.team-card-crest {
+  position: relative;
+}
+.team-card-fav {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.1s, background 0.1s, transform 0.12s;
+  backdrop-filter: blur(4px);
+  line-height: 1;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .team-card-fav:hover { transform: scale(1.15); }
+}
+.team-card-fav.is-fav {
+  color: #e8407a;
+  border-color: #e8407a;
+  background: rgba(232,64,122,0.08);
+}
+
 /* ── Reduced motion ────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .team-card,

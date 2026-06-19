@@ -1,8 +1,12 @@
 import { Link } from 'react-router-dom';
 import Flag from './Flag.jsx';
 import Crest from './Crest.jsx';
+import { useFavorites } from '../context/FavoritesContext.jsx';
 
 export default function TeamCard({ team }) {
+  const { isFavoriteTeam, toggleTeam } = useFavorites();
+  const fav = isFavoriteTeam(team.slug);
+
   return (
     <Link
       to={`/teams/${team.slug}`}
@@ -13,6 +17,14 @@ export default function TeamCard({ team }) {
       <div className="team-card-accent" />
       <div className="team-card-crest">
         <Crest slug={team.slug} size="md" alt={team.name} />
+        <button
+          className={'team-card-fav' + (fav ? ' is-fav' : '')}
+          aria-label={fav ? `Unfavorite ${team.name}` : `Favorite ${team.name}`}
+          aria-pressed={fav}
+          onClick={e => { e.preventDefault(); e.stopPropagation(); toggleTeam(team.slug); }}
+        >
+          {fav ? '♥' : '♡'}
+        </button>
       </div>
       <div className="team-card-body">
         <div className="team-card-row">
