@@ -98,6 +98,17 @@ export function mapMatch(apiMatch) {
   };
 }
 
+export function mapPlayer(p) {
+  return {
+    id: p.id,
+    name: p.name ?? '',
+    position: p.position ?? 'Unknown',
+    shirtNumber: p.shirtNumber ?? null,
+    age: p.age ?? null,
+    photoUrl: p.photoUrl ?? null,
+  };
+}
+
 export function mapStandings(apiRows) {
   const groupMap = {};
   for (const row of apiRows) {

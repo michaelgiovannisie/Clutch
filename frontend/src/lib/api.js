@@ -1,4 +1,4 @@
-import { mapTeam, mapMatch, mapStandings } from './mappers.js';
+import { mapTeam, mapMatch, mapStandings, mapPlayer } from './mappers.js';
 import mockMatchesRaw from '../data/mockMatches.json';
 import { groups as mockGroups } from '../data/mockStandings.js';
 import { TEAMS as mockTeams } from '../data/mockTeams.js';
@@ -36,6 +36,25 @@ export async function fetchMatchById(id) {
   } catch {
     // fallback: search mock data
     return mockMatchesRaw.find(m => m.id === Number(id)) ?? null;
+  }
+}
+
+export async function fetchTeamBySlug(slug) {
+  try {
+    const data = await get('/api/teams');
+    const mapped = data.map(mapTeam);
+    return mapped.find(t => t.slug === slug) ?? null;
+  } catch {
+    return mockTeams.find(t => t.slug === slug) ?? null;
+  }
+}
+
+export async function fetchTeamPlayers(teamId) {
+  try {
+    const data = await get(`/api/teams/${teamId}/players`);
+    return data.map(mapPlayer);
+  } catch {
+    return [];
   }
 }
 

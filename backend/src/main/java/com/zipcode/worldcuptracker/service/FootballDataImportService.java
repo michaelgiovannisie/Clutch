@@ -227,8 +227,8 @@ public class FootballDataImportService {
             continue;
         }
 
-        Team homeTeam = findTeamByApiId(homeApiId);
-        Team awayTeam = findTeamByApiId(awayApiId);
+        Team homeTeam = findOrCreateTeamFromFixture(homeApiId, home);
+        Team awayTeam = findOrCreateTeamFromFixture(awayApiId, away);
         Venue venue = importVenue(venueData);
 
         Match match = matchRepository.findByApiId(fixtureId)
@@ -406,10 +406,19 @@ public class FootballDataImportService {
     }
 }
 
-    private Team findTeamByApiId(Integer apiId) {
-        return teamRepository.findByApiId(apiId)
-                .orElseThrow(() ->
-                        new RuntimeException("Team not found for apiId: " + apiId));
+    private Team findOrCreateTeamFromFixture(Integer apiId, Map<String, Object> fixtureTeamData) {
+        return teamRepository.findByApiId(apiId).orElseGet(() -> {
+            Team team = new Team();
+            team.setApiId(apiId);
+            String name = (String) fixtureTeamData.get("name");
+            team.setName(name);
+            team.setCountry(name);
+            team.setFlagUrl((String) fixtureTeamData.get("logo"));
+            team.setCoach("Not available");
+            String group = fallbackGroupForTeam(name);
+            team.setGroupLabel(group.equals("TBD") ? "TBD" : group);
+            return teamRepository.save(team);
+        });
     }
 
     private Integer toInteger(Object value) {

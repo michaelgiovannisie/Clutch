@@ -34,7 +34,7 @@ public class AdminRefreshController {
 
     @PostMapping("/refresh")
     public ResponseEntity<String> refreshData() {
-        String message = footballDataImportService.refreshResultsOnly();
+        String message = footballDataImportService.refreshStaticData();
         return ResponseEntity.ok(message);
     }
 
