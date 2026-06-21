@@ -5,7 +5,7 @@ const headers = ['', '#', 'Team', 'P', 'W', 'D', 'L', 'GF', 'GA', 'GD', 'Pts'];
 export default function GroupTable({ group }) {
   return (
     <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-card)', border: '1px solid var(--border)', overflow: 'hidden' }}>
-      <div className="card-header section-title">
+      <div className="card-header section-title group-table-header" data-group={group.id}>
         Group {group.id}
       </div>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>

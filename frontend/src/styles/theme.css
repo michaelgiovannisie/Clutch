@@ -1377,6 +1377,101 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Group color tokens (A–L) ──────────────────────────────────────────── */
+:root {
+  --group-A: #FF6B35;
+  --group-B: #E8407A;
+  --group-C: #FFB830;
+  --group-D: #29B394;
+  --group-E: #7C6EF0;
+  --group-F: #F04B6C;
+  --group-G: #44C76A;
+  --group-H: #FF8C00;
+  --group-I: #2196F3;
+  --group-J: #FF5252;
+  --group-K: #9C27B0;
+  --group-L: #00BCD4;
+}
+
+/* Group table header left-border accent */
+.group-table-header { position: relative; padding-left: 18px !important; }
+.group-table-header::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  border-radius: 0 2px 2px 0;
+}
+.group-table-header[data-group="A"]::before { background: var(--group-A); }
+.group-table-header[data-group="B"]::before { background: var(--group-B); }
+.group-table-header[data-group="C"]::before { background: var(--group-C); }
+.group-table-header[data-group="D"]::before { background: var(--group-D); }
+.group-table-header[data-group="E"]::before { background: var(--group-E); }
+.group-table-header[data-group="F"]::before { background: var(--group-F); }
+.group-table-header[data-group="G"]::before { background: var(--group-G); }
+.group-table-header[data-group="H"]::before { background: var(--group-H); }
+.group-table-header[data-group="I"]::before { background: var(--group-I); }
+.group-table-header[data-group="J"]::before { background: var(--group-J); }
+.group-table-header[data-group="K"]::before { background: var(--group-K); }
+.group-table-header[data-group="L"]::before { background: var(--group-L); }
+
+/* ── Hero sheen animation ──────────────────────────────────────────────── */
+@keyframes hero-sheen {
+  0%   { transform: translateX(-120%) skewX(-15deg); }
+  100% { transform: translateX(220%)  skewX(-15deg); }
+}
+
+.home-hero {
+  position: relative;
+  overflow: hidden;
+}
+.home-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
+  width: 40%;
+  animation: hero-sheen 4s ease-in-out infinite;
+  pointer-events: none;
+  aria-hidden: true;
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-hero::before { display: none; }
+}
+
+/* ── LIVE pulse ────────────────────────────────────────────────────────── */
+@keyframes live-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 64, 122, 0.6); }
+  50%       { box-shadow: 0 0 0 5px rgba(232, 64, 122, 0); }
+}
+
+.match-row-status .pill--live,
+.match-detail-score-block .pill--live {
+  animation: live-pulse 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .match-row-status .pill--live,
+  .match-detail-score-block .pill--live { animation: none; }
+}
+
+/* ── Micro-interactions ────────────────────────────────────────────────── */
+/* Keyboard focus rings */
+:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Button press state */
+button:active:not(:disabled),
+a.group-pill:active {
+  transform: scale(0.97);
+}
+@media (prefers-reduced-motion: reduce) {
+  button:active:not(:disabled),
+  a.group-pill:active { transform: none; }
+}
+
 /* ── Reduced motion ────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .team-card,

@@ -6,7 +6,7 @@ const toneStyles = {
 
 export default function Pill({ tone = 'neutral', children }) {
   return (
-    <span style={{
+    <span className={`pill--${tone}`} style={{
       display: 'inline-block',
       padding: '0.15rem 0.55rem',
       borderRadius: 'var(--radius-pill)',
