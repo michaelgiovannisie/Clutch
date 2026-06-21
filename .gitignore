@@ -22,3 +22,24 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Secrets — local overrides, never commit
+application-local.properties
+**/application-local.properties
+
+# Build output
+target/
+**/target/
+**/dist/
+frontend/dist/
+
+# Node
+node_modules/
+**/node_modules/
+
+# Vite temp files
+**/*.timestamp-*.mjs
+
+# macOS
+.DS_Store
+**/.DS_Store
