@@ -1,4 +1,0 @@
--- Reference DDL for the World Cup Tracker schema.
--- Populated in PLAN.md §2.1 alongside the JPA entities
--- (Team, Venue, Match, MatchEvent, Commentary).
--- Kept in sync with Hibernate auto-DDL for reference; not executed by the app.
