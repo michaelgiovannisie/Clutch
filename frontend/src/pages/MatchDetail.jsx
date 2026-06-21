@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { fetchMatchById } from '../lib/api.js';
+import { fetchMatchById, fetchMatchCommentary } from '../lib/api.js';
 import { useFavorites } from '../context/FavoritesContext.jsx';
 import Flag from '../components/Flag.jsx';
 import Crest from '../components/Crest.jsx';
@@ -17,11 +17,19 @@ export default function MatchDetail() {
   const { id } = useParams();
   const [match, setMatch] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [commentary, setCommentary] = useState(null);
+  const [commentaryLoading, setCommentaryLoading] = useState(true);
   const { isStarredMatch, toggleMatch } = useFavorites();
 
   useEffect(() => {
     setLoading(true);
     fetchMatchById(id).then(m => { setMatch(m); setLoading(false); });
+  }, [id]);
+
+  useEffect(() => {
+    setCommentaryLoading(true);
+    setCommentary(null);
+    fetchMatchCommentary(id).then(text => { setCommentary(text); setCommentaryLoading(false); });
   }, [id]);
 
   if (loading) {
@@ -94,9 +102,21 @@ export default function MatchDetail() {
       {/* AI commentary slot */}
       <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-card)', border: '1px solid var(--border)', overflow: 'hidden', marginTop: 20 }}>
         <div className="card-header section-title">AI Commentary</div>
-        <p style={{ padding: '16px', color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>
-          Commentary coming soon — check back after kickoff.
-        </p>
+        {commentaryLoading && (
+          <p style={{ padding: '16px', color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>
+            Generating pre-match analysis…
+          </p>
+        )}
+        {!commentaryLoading && commentary && (
+          <p style={{ padding: '16px', color: 'var(--text)', margin: 0, fontSize: '0.95rem', lineHeight: 1.6 }}>
+            {commentary}
+          </p>
+        )}
+        {!commentaryLoading && !commentary && (
+          <p style={{ padding: '16px', color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>
+            Commentary coming soon — check back later.
+          </p>
+        )}
       </div>
     </div>
   );

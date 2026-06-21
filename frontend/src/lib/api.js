@@ -58,6 +58,17 @@ export async function fetchTeamPlayers(teamId) {
   }
 }
 
+export async function fetchMatchCommentary(id) {
+  try {
+    const res = await fetch(`${BASE}/api/matches/${id}/commentary`);
+    if (!res.ok) return null; // backend unreachable, no key configured, or generation failed
+    const data = await res.json();
+    return data.content ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchStandings() {
   try {
     const data = await get('/api/standings');
