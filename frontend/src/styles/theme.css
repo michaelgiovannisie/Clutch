@@ -1038,17 +1038,20 @@ body {
 .home-match-team {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .home-match-team--away {
   flex-direction: row-reverse;
+  justify-content: flex-start;
 }
 
 .home-match-flag {
-  width: 20px;
-  height: 14px;
+  width: 22px;
+  height: 15px;
   object-fit: cover;
   border-radius: 2px;
   flex-shrink: 0;
@@ -1060,6 +1063,9 @@ body {
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .home-match-centre {

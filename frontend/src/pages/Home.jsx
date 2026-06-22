@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchMatches } from '../lib/api.js';
 import Flag from '../components/Flag.jsx';
-import Crest from '../components/Crest.jsx';
 import Pill from '../components/Pill.jsx';
 
 // ── Tournament phase ─────────────────────────────────────────────────────────
@@ -69,8 +68,7 @@ function MatchStripCard({ match }) {
       <div className="home-match-stage">{match.stage}</div>
       <div className="home-match-teams">
         <div className="home-match-team">
-          <Crest slug={match.home.slug} size="sm" alt={match.home.name} />
-          <Flag  slug={match.home.slug} alt={match.home.name} className="home-match-flag" />
+          <Flag slug={match.home.slug} alt={match.home.name} className="home-match-flag" />
           <span className="home-match-abbr">{match.home.abbr}</span>
         </div>
 
@@ -91,8 +89,7 @@ function MatchStripCard({ match }) {
 
         <div className="home-match-team home-match-team--away">
           <span className="home-match-abbr">{match.away.abbr}</span>
-          <Flag  slug={match.away.slug} alt={match.away.name} className="home-match-flag" />
-          <Crest slug={match.away.slug} size="sm" alt={match.away.name} />
+          <Flag slug={match.away.slug} alt={match.away.name} className="home-match-flag" />
         </div>
       </div>
     </Link>
