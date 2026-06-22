@@ -114,8 +114,8 @@ export function mapStandings(apiRows) {
   for (const row of apiRows) {
     const slug = nameToSlug(row.teamName);
     const meta = TEAM_META[slug] ?? {};
-    // Use canonical group from team meta; fall back to parsed API label
-    const letter = meta?.group ?? stripGroup(row.groupLabel);
+    // Use the API groupLabel directly — backend now always returns clean "Group X" labels
+    const letter = stripGroup(row.groupLabel);
     if (!groupMap[letter]) groupMap[letter] = [];
     groupMap[letter].push({
       slug,
