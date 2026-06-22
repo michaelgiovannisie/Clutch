@@ -1,101 +1,196 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { fetchMatches } from '../lib/api.js';
+import Flag from '../components/Flag.jsx';
+import Crest from '../components/Crest.jsx';
+import Pill from '../components/Pill.jsx';
 
-function tournamentStatus() {
-  const now = new Date();
-  const phases = [
-    { start: new Date('2026-06-11'), label: 'Group Stage',    detail: 'Knockouts begin June 28' },
-    { start: new Date('2026-06-28'), label: 'Round of 32',    detail: 'Round of 16 begins July 5' },
-    { start: new Date('2026-07-05'), label: 'Round of 16',    detail: 'Quarterfinals July 11' },
-    { start: new Date('2026-07-11'), label: 'Quarterfinals',  detail: 'Semifinals July 15' },
-    { start: new Date('2026-07-15'), label: 'Semifinals',     detail: 'Final July 19' },
-    { start: new Date('2026-07-19'), label: 'Final Day',      detail: 'FIFA World Cup 2026™ Final' },
-  ];
-  const kickoff = new Date('2026-06-11');
-  const end     = new Date('2026-07-20');
+// ── Tournament phase ─────────────────────────────────────────────────────────
 
-  if (now < kickoff) {
-    const days = Math.ceil((kickoff - now) / 86400000);
-    return { phase: 'Countdown', detail: `Tournament kicks off in ${days} day${days === 1 ? '' : 's'}` };
-  }
-  if (now >= end) {
-    return { phase: 'Concluded', detail: 'FIFA World Cup 2026™ has ended' };
-  }
-  let current = phases[0];
-  for (const p of phases) {
-    if (now >= p.start) current = p;
-  }
-  return { phase: current.label, detail: current.detail };
+const PHASES = [
+  { start: new Date('2026-06-11'), label: 'Group Stage',   next: new Date('2026-06-28'), nextLabel: 'Round of 32 begins' },
+  { start: new Date('2026-06-28'), label: 'Round of 32',   next: new Date('2026-07-05'), nextLabel: 'Round of 16 begins' },
+  { start: new Date('2026-07-05'), label: 'Round of 16',   next: new Date('2026-07-11'), nextLabel: 'Quarterfinals begin' },
+  { start: new Date('2026-07-11'), label: 'Quarterfinals', next: new Date('2026-07-15'), nextLabel: 'Semifinals begin' },
+  { start: new Date('2026-07-15'), label: 'Semifinals',    next: new Date('2026-07-19'), nextLabel: 'Final day' },
+  { start: new Date('2026-07-19'), label: 'Final',         next: new Date('2026-07-20'), nextLabel: 'Tournament ends' },
+];
+const KICKOFF = new Date('2026-06-11');
+const END     = new Date('2026-07-20');
+
+function getPhase(now) {
+  if (now >= END)    return { label: 'Concluded', target: null, targetLabel: null };
+  if (now < KICKOFF) return { label: 'Countdown', target: KICKOFF, targetLabel: 'Tournament kicks off' };
+  let phase = PHASES[0];
+  for (const p of PHASES) { if (now >= p.start) phase = p; }
+  return { label: phase.label, target: phase.next, targetLabel: phase.nextLabel };
 }
 
+function useNow() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
+}
+
+function CountdownNumerals({ target, label }) {
+  const now = useNow();
+  const diff = Math.max(0, target - now);
+  const days = Math.floor(diff / 86400000);
+  const hrs  = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000)  / 60000);
+  return (
+    <div className="home-countdown">
+      <p className="home-countdown-label">{label} in</p>
+      <div className="home-countdown-numerals">
+        {days > 0 && (
+          <><span className="home-countdown-num">{days}</span><span className="home-countdown-unit">d</span></>
+        )}
+        <span className="home-countdown-num">{String(hrs).padStart(2, '0')}</span>
+        <span className="home-countdown-unit">h</span>
+        <span className="home-countdown-num">{String(mins).padStart(2, '0')}</span>
+        <span className="home-countdown-unit">m</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Match strip ──────────────────────────────────────────────────────────────
+
+function MatchStripCard({ match }) {
+  const isLive     = match.status === 'LIVE';
+  const isFinished = match.status === 'FINISHED';
+  const hasScore   = match.homeScore !== null && match.awayScore !== null;
+
+  return (
+    <Link to={`/matches/${match.id}`} className="home-match-card">
+      <div className="home-match-stage">{match.stage}</div>
+      <div className="home-match-teams">
+        <div className="home-match-team">
+          <Crest slug={match.home.slug} size="sm" alt={match.home.name} />
+          <Flag  slug={match.home.slug} alt={match.home.name} className="home-match-flag" />
+          <span className="home-match-abbr">{match.home.abbr}</span>
+        </div>
+
+        <div className="home-match-centre">
+          {hasScore ? (
+            <span className="home-match-scoreline">{match.homeScore} – {match.awayScore}</span>
+          ) : (
+            <span className="home-match-vs">vs</span>
+          )}
+          {isLive && <Pill tone="live">{match.minute ? `${match.minute}'` : 'Live'}</Pill>}
+          {isFinished && <span className="home-match-ft">FT</span>}
+          {!isLive && !isFinished && match.kickoff && (
+            <span className="home-match-time">
+              {new Date(match.kickoff).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+        </div>
+
+        <div className="home-match-team home-match-team--away">
+          <span className="home-match-abbr">{match.away.abbr}</span>
+          <Flag  slug={match.away.slug} alt={match.away.name} className="home-match-flag" />
+          <Crest slug={match.away.slug} size="sm" alt={match.away.name} />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function MatchStrip({ matches }) {
+  if (matches === null) {
+    return (
+      <div className="home-match-strip">
+        {[0, 1, 2].map(i => <div key={i} className="home-match-card home-match-card--skeleton" />)}
+      </div>
+    );
+  }
+  if (matches.length === 0) {
+    return <p className="home-strip-empty">No matches scheduled — check back soon</p>;
+  }
+  return (
+    <div className="home-match-strip">
+      {matches.map(m => <MatchStripCard key={m.id} match={m} />)}
+    </div>
+  );
+}
+
+// ── Nav cards ────────────────────────────────────────────────────────────────
+
 const NAV_CARDS = [
-  {
-    to: '/teams',
-    title: 'Teams',
-    description: 'All 48 nations competing at FIFA World Cup 2026™',
-    icon: <IconTeams />,
-  },
-  {
-    to: '/standings',
-    title: 'Standings',
-    description: 'Live group tables, bracket, and qualification projections',
-    icon: <IconStandings />,
-  },
-  {
-    to: '/matches',
-    title: 'Matches',
-    description: 'Full match schedule and results across all groups',
-    icon: <IconMatches />,
-  },
-  {
-    to: '/venues',
-    title: 'Venues',
-    description: '16 host stadiums across the USA, Canada, and Mexico',
-    icon: <IconVenues />,
-  },
+  { to: '/teams',     title: 'Teams',     icon: <IconTeams />,     hook: d => `${d.teamCount} nations` },
+  { to: '/standings', title: 'Standings', icon: <IconStandings />, hook: d => d.phase },
+  { to: '/matches',   title: 'Matches',   icon: <IconMatches />,   hook: d => d.matchesToday > 0 ? `${d.matchesToday} today` : 'View schedule' },
+  { to: '/venues',    title: 'Venues',    icon: <IconVenues />,    hook: ()  => '16 host stadiums' },
 ];
 
-const STATS = [
-  { value: '48', label: 'Teams' },
-  { value: '12', label: 'Groups' },
-  { value: '16', label: 'Host cities' },
-  { value: '104', label: 'Matches' },
-  { value: '3',  label: 'Host nations' },
-];
+// ── Home ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  const { phase, detail } = tournamentStatus();
+  const now = useNow();
+  const { label: phase, target, targetLabel } = getPhase(now);
+  const [matches, setMatches] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchMatches().then(all => { if (!cancelled) setMatches(all); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const todayStr     = now.toISOString().slice(0, 10);
+  const todayMatches = matches?.filter(m => m.date === todayStr) ?? null;
+  const liveMatches  = matches?.filter(m => m.status === 'LIVE') ?? [];
+  const stripLabel   = todayMatches?.length > 0 ? "Today's Matches" : "Up Next";
+  const stripMatches = matches === null ? null
+    : todayMatches?.length > 0 ? todayMatches
+    : matches.filter(m => m.status === 'SCHEDULED').slice(0, 4);
+
+  const dynamicData = {
+    teamCount:    48,
+    phase,
+    matchesToday: todayMatches?.length ?? 0,
+  };
+
+  const isConcluded = phase === 'Concluded';
 
   return (
     <div className="home-page">
-      {/* Hero */}
+
+      {/* ── Hero ── */}
       <div className="home-hero surface-card">
-        <h1 className="page-title">Ballon d'Or</h1>
-        <p className="page-subtitle">Your guide to the FIFA World Cup 2026™</p>
-        <div className="home-status-band">
-          <span className="home-status-phase">{phase}</span>
-          <span className="home-status-sep">·</span>
-          <span className="home-status-detail">{detail}</span>
+        <div className="home-hero-phase-row">
+          <span className={`home-phase-badge${phase !== 'Countdown' && !isConcluded ? ' home-phase-badge--live' : ''}`}>
+            {phase}
+            {liveMatches.length > 0 && <span className="home-phase-live-dot" aria-hidden="true" />}
+          </span>
         </div>
+
+        <h1 className="page-title" style={{ marginBottom: 0 }}>Ballon d'Or</h1>
+        <p className="page-subtitle">Your guide to the FIFA World Cup 2026™</p>
+
+        {!isConcluded && target && <CountdownNumerals target={target} label={targetLabel} />}
+        {isConcluded && <p className="home-concluded">FIFA World Cup 2026™ has concluded</p>}
       </div>
 
-      {/* Quick-nav cards */}
+      {/* ── Today / Up next ── */}
+      <div className="home-strip-section">
+        <div className="home-strip-header">
+          <span className="section-title">{stripLabel}</span>
+          <Link to="/matches" className="home-strip-more">All matches →</Link>
+        </div>
+        <MatchStrip matches={stripMatches} />
+      </div>
+
+      {/* ── Quick-nav cards ── */}
       <div className="home-nav-grid">
         {NAV_CARDS.map(card => (
           <Link key={card.to} to={card.to} className="home-nav-card">
             <span className="home-nav-icon" aria-hidden="true">{card.icon}</span>
             <strong className="home-nav-title">{card.title}</strong>
-            <p className="home-nav-desc">{card.description}</p>
+            <p className="home-nav-hook">{card.hook(dynamicData)}</p>
           </Link>
-        ))}
-      </div>
-
-      {/* Stat band */}
-      <div className="home-stats surface-card">
-        {STATS.map((s, i) => (
-          <div key={i} className="home-stat">
-            <span className="home-stat-value">{s.value}</span>
-            <span className="home-stat-label">{s.label}</span>
-          </div>
         ))}
       </div>
     </div>
